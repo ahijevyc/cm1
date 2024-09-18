@@ -8,7 +8,7 @@ Cloud Model
 <b>New announcements:</b>
 <p>
 <ul>
-<li>24 March 2024:  An new version of CM1 (cm1r21.1) has been released.    <a href="getcode.html">Download the code here.</a>    
+<li>24 March 2024:  An new version of CM1 (cm1r21.1) has been released.    <a href="downloadcode.html">Download the code here.</a>    
 </ul>
 <p>
 <ul>
@@ -29,7 +29,7 @@ For more information, please read these <a href="faq.html">answers to frequently
 <p>
 <b>Code</b>
 <p>
-<a href="getcode.html">Download the code here.</a>  (Most recent version:  cm1r21.1, available since 24 March 2024)
+<a href="downloadcode.html">Download the code here.</a>  (Most recent version:  cm1r21.1, available since 24 March 2024)
 <p>
 <p>
 <hr>
