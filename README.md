@@ -1,98 +1,75 @@
+<img src="https://www2.mmm.ucar.edu/people/bryan/cm1/NSF-NCAR_Lockup-UCAR-Dark_102523.png" width="30%"/>
+
 # cm1
 Cloud Model
+
+## New announcements:
+* 24 March 2024:  An new version of CM1 `cm1r21.1` has been released.  [Download the code here](downloadcode).    
+
+* [Here is a sample submission script for NCAR's derecho supercomputer](scripts/cm1run_derecho)  **(Last updated:  24 March 2024)**
+
+## What is CM1?
+
+_In scientific terms_:  CM1 is a three-dimensional, non-hydrostatic, non-linear, time-dependent numerical model designed for idealized studies of atmospheric phenomena.
+
+_In non-scientific terms_:  CM1 is a computer program used for atmospheric research.  It is designed for studies of relatively small-scale processes in the Earth's atmosphere, such as thunderstorms.  
+
+For more information, please read these [answers to frequently asked questions](doc/faq.md) about CM1.
+
+## Code
+
+[Download the code here](downloadcode)  (Most recent version:  `cm1r21.1` available since 24 March 2024)
+
+## Documentation
+  
+### About CM1:
+
+- [Parallel Performance](doc/pp.md)
+- [The governing equations for CM1](doc/cm1_equations.pdf)  **(Last updated:  21 October 2021)**
+- [Acknowledgments](https://www2.mmm.ucar.edu/people/bryan/cm1/ACKNOWLEDGMENTS).
+- [Answers to frequently asked questions](doc/faq.md) about CM1.
+- [presentation on CM1 parallelization](doc/cm1_parallelization.pdf) (pdf)  (From presentation at NCSA, December 2009)
+
+### Helpful Information for New Users of CM1:
+
+- [A brief summary of how to run cm1](doc/user_guide_brief.md)
+- [README.namelist](https://www2.mmm.ucar.edu/people/bryan/cm1/README.namelist) -- explains the various settings in the namelist.input file.
+- [Pre-configured namelist.input files](https://www2.mmm.ucar.edu/people/bryan/cm1/namelists)
+- [Soundings for idealized simulations](https://www2.mmm.ucar.edu/people/bryan/cm1/soundings)
+- [Sample submission scripts for NCAR's supercomputers](https://www2.mmm.ucar.edu/people/bryan/cm1/scripts)
+
+### Other Information about CM1:
+
+- [CHANGES in release 21.1](doc/CHANGES) -- new features, modifications, and code fixes for the newest version (24 March 2024)
+  - [History of all CHANGES](doc/changes.md) (from `r2` to present)
+- [Known problems and fixes](doc/known_problems.md) (last updated:  5 January 2012)
+- [Instructions for adding a new microphysics scheme to CM1](doc/new_microphysics.pdf) (pdf)
+- [Some useful GrADS scripts](scripts/grads)
+- [Some useful programs for MPI users](https://www2.mmm.ucar.edu/people/bryan/cm1/programs)
+
+## Testing and evaluation of CM1
+
+Here are reports on some basic tests of the accuracy and capability of CM1.  (Note:  all of these tests have been completed, but I haven't had time to write up the results.  I plan to have all of these posted online in the near future.)
+
+- [Gravity current](https://www2.mmm.ucar.edu/people/bryan/cm1/test_gravity_current)
+- [Inertia-gravity waves](https://www2.mmm.ucar.edu/people/bryan/cm1/test_inertia_gravity_waves)
+- Two-dimensional mountain waves
+- Potential flow over a mountain in dry and moist environments
+- Bryan-Fritsch moist benchmark
+- Large eddy simulation of the convective boundary layer
+- A comparison of axisymmetric and three-dimensional simulations of a tropical cyclone
+
+## Research Results
+
+**Peer-reviewed articles** that use CM1: (Please contact George Bryan if you have something to add to this list.) 
+_Last updated:  March 2024_
+
+Check out this <a href="doc/cm1journals.md">list of journals that have published articles using CM1</a>.
+
+![cm1pubs-211217.png](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1pubs-211217.png)
+
 <HTML>
 <BODY>
-<p>
-<hr>
-<p>
-<b>New announcements:</b>
-<p>
-<ul>
-<li>24 March 2024:  An new version of CM1 (cm1r21.1) has been released.    <a href="doc/downloadcode.html">Download the code here.</a>    
-</ul>
-<p>
-<ul>
-  <li><a href="cm1run_derecho">Here is a sample submission script for NCAR's derecho supercomputer</a>  <font color="red">(Last updated:  24 March 2024)</font>
-</ul>
-<p>
-<hr>
-<p>
-<b>What is CM1?</b>
-<p>
-<i>In scientific terms</i>:  CM1 is a three-dimensional, non-hydrostatic, non-linear, time-dependent numerical model designed for idealized studies of atmospheric phenomena.
-<p>
-<i>In non-scientific terms</i>:  CM1 is a computer program used for atmospheric research.  It is designed for studies of relatively small-scale processes in the Earth's atmosphere, such as thunderstorms.  
-<p>
-For more information, please read these <a href="doc/faq.html">answers to frequently asked questions</a> about CM1.
-<p>
-<hr>
-<p>
-<b>Code</b>
-<p>
-<a href="doc/downloadcode.html">Download the code here.</a>  (Most recent version:  cm1r21.1, available since 24 March 2024)
-<p>
-<p>
-<hr>
-<p>
-<b>Documentation</b>
-<p>
-About CM1:<br>
-<ul>
-  <li><a href="doc/pp.html">Parallel Performance</a> 
-  <li><a href="doc/cm1_equations.pdf">The governing equations for CM1</a>  <font color="red">(Last updated:  21 October 2021)</font>
-  <li><a href="ACKNOWLEDGMENTS">Acknowledgments</a>.
-  <li><a href="doc/faq.html">Answers to frequently asked questions</a> about CM1.
-  <li><a href="doc/cm1_parallelization.pdf">presentation on CM1 parallelization</a> (pdf)  (From presentation at NCSA, December 2009)
-</ul>
-<p>
-Helpful Information for New Users of CM1:<br>
-<ul>
-  <li><a href="doc/user_guide_brief.html">A brief summary of how to run cm1.</a>
-  <li><a href="README.namelist">README.namelist</a> -- explains the various settings in the namelist.input file.
-  <li><a href="namelists/">Pre-configured namelist.input files</a>
-  <li><a href="soundings/">Soundings for idealized simulations</a>
-  <li><a href="scripts/">Sample submission scripts for NCAR's supercomputers</a>
-</ul>
-<p>
-Other Information about CM1:<br>
-<ul>
-  <li><a href="CHANGES">CHANGES in release 21.1</a> -- new features, modifications, and code fixes for the newest version (24 March 2024)
-    <ul>
-    <li><a href="doc/changes.html">History of all CHANGES</a> (from r2 to present)
-    </ul>
-  <li><a href="doc/known_problems.html">Known problems and fixes</a> (last updated:  5 January 2012)
-  <li><a href="doc/new_microphysics.pdf">Instructions for adding a new microphysics scheme to CM1</a> (pdf)
-  <li><a href="grads/">Some useful GrADS scripts</a>
-  <li><a href="programs/">Some useful programs for MPI users</a>
-</ul>
-<p>
-<hr>
-<p>
-<b>Testing and evaluation of CM1</b>
-<p>
-Here are reports on some basic tests of the accuracy and capability of CM1.  (Note:  all of these tests have been completed, but I haven't had time to write up the results.  I plan to have all of these posted online in the near future.)
-<p>
-<ul>
-  <li><a href="test_gravity_current/">Gravity current</a></li>
-  <li><a href="test_inertia_gravity_waves/">Inertia-gravity waves</a></li>
-  <li>Two-dimensional mountain waves</li>
-  <li>Potential flow over a mountain in dry and moist environments</li>
-  <li>Bryan-Fritsch moist benchmark</li>
-  <li>Large eddy simulation of the convective boundary layer</li>
-  <li>A comparison of axisymmetric and three-dimensional simulations of a tropical cyclone</li>
-</ul>
-<p>
-<hr>
-<p>
-<b>Research Results</b>
-<p>
-<u>Peer-reviewed articles</u> that use CM1: (Please contact George Bryan if you have something to add to this list.) 
-<i>Last updated:  March 2024</i>
-<p>
-Check out this <a href="doc/cm1journals.html">list of journals that have published articles using CM1</a>.
-<p>
-<img src="cm1pubs-211217.png">
-<p>
 <ul>
   <li>2024:</li>
   <ul>
