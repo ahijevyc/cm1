@@ -1,0 +1,86 @@
+<HTML>
+<TITLE>Brief Users' Guide to CM1</TITLE>
+<BODY>
+<p>
+<center>
+  <font size=+1><b>A quick summary of how to download, compile, and run CM1</b></font>
+</center>
+<p>
+<hr>
+<p>
+<font color="red">(Valid for cm1r18 and later versions)</font>
+<p>
+NOTE:  Knowledge of UNIX and FORTRAN is <font color="red">required</font> to use CM1.  Experience with numerical modeling is very beneficial.
+<p>
+<hr>
+<p>
+<b>Step 1:  Download the code.</b>
+<p>
+<ol>
+  <li>From the CM1 web page, click on the <a href="https://www2.mmm.ucar.edu/people/bryan/cm1/getcode.html">"Download the code here"</a> link.
+  <li>Read through the disclaimer.
+  <li>If you agree to the terms in the disclaimer, they you may download and use CM1:  click on the link at the bottom of the page. 
+  <li>CM1 is distributed as a gzipped tar file that can be downloaded from this page. 
+  <li>Place the file on the disk that you will be running the model. Since the output from CM1 can be large, you should place the file on a disk with a substantial amount of free space (i.e., several GB of disk space should be available). 
+  <li>To uncompress and extract the files, type: "gunzip cm1r18.tar.gz" followed by "tar xvf cm1r18.tar" 
+  <li>Proceed to Step 2 below. 
+</ol>
+<p>
+<hr>
+<p>
+<b>Step 2:  Setup the code for your study.</b>
+<p>
+<ol>
+  <li><b>Edit "Makefile":</b>  cd into the "src" directory.  In "Makefile," select the operating system and parallelization method that is appropriate for your hardware, and uncomment all lines in that section.  Compiler flags can also be set/changed in this file.   If you want to use netcdf or hdf5 output, uncomment the appropriate lines at the very top of Makefile and set the paths to your netcdf/hdf5 distribution. 
+  <li><b>Edit "base.F" (if necessary):</b>  Modify the base-state conditions, as appropriate. There are two sections: one for the hydrostatic pressure, temperature, and moisture sounding (see "isnd" section); and one for the initial winds (u and v components) (see "iwnd" section). 
+  <li><b>Edit "init3d.F" (if necessary):</b>  In "init3d.F," you can add perturbations to the base state. Several default options are available.
+  <li><b>Edit "init_terrain.F" (if necessary):</b>  If you are using terrain, you will have to specify the terrain via the "zs" array in the file "init_terrain.F". 
+  <li><b>Edit "init_surface.F" (if necessary):</b>  If you are using surface fluxes of heat/moisture/momentum, then you might have to specify the horizontal distribution of several variables in the file "init_surface.F".  See the param12 section in "README.namelist" for more information.  
+  <li><b>Compile the code:</b>  Type "make" within the "src" directory. On some machines, you may need to use "gmake" instead. 
+  <li><b>Edit "namelist.input":</b>  If the code compiled without error, cd into the "run" directory and edit "namelist.input". See the "README.namelist" file in the root directory for guidance. Here, you set the domain dimensions, as well as the number of processors (using "nodex" and "nodey"). See the README files in the main directory for more information. 
+  <li><b>Place the "input_sounding" file in the same directory as "cm1.exe" (if necessary):</b>  If you are supplying an external sounding file, make sure it is called "input_sounding" and place it in the same directory as "cm1.exe".  See <a href="https://www2.mmm.ucar.edu/people/bryan/cm1/soundings/">"Soundings for idealized simulations"</a> for more information. 
+  <li><b>Place the "LANDUSE.TBL" file in the same directory as "cm1.exe" (if necessary):</b>  If you are using surface fluxes of heat/momentum/moisture, or if you are using the atmospheric radiation scheme, then you need to specify the surface conditions.  (See the param12 section of README.namelist for more information.)  The LANDUSE.TBL file comes with cm1 in the "run" directory. 
+</ol>
+<p>
+<hr>
+<p>
+<b>Step 3:  Run CM1.</b>
+<p>
+<ol>
+  <li><b>Run the code:</b>  Type "./cm1.exe" to run the code. You will probably need a different command for some MPI applications ... check the documentation for your supercomputer for more information. 
+  <li><b>stout and sterr info:</b>  To redirect all standard output and standard error information ... i.e., all the stuff that prints to screen when running cm1 ... use this command:  "./cm1.exe >&! cm1.print.out &"
+  <li><b>Output:</b>  All output is placed in the "run" directory, by default. You can move the output files to another directory when the code is finished.  <font color="red">Running the code again will overwrite the files if they are not moved.</font>  
+</ol>
+<p>
+<hr>
+<p>
+<b>For more information ... </b>
+<p>
+For more information about model settings, see the README.namelist file.
+<p>
+For more information about running on distributed memory computers (with MPI), see the README.parallel file. 
+<p>
+For more information about running with terrain, see the README.terrain file.
+<p>
+For more information about running the axisymmetric version of the model, see the README.axisymm file.
+<p>
+For more information about running the model with stretched grids, see the README.stretch file.
+<p>
+<hr>
+<p>
+Send comments and/or questions about this page to:<br>
+<p>
+George H. Bryan<br>
+National Center for Atmospheric Research<br>
+3090 Center Green Drive<br>
+Boulder, CO 80301, USA<br>
+email: gbryan at ucar dot edu
+<p>
+<i>Last updated:  13 August 2015</i>
+<p>
+<hr>
+<p>
+The National Center for Atmospheric Research is sponsored by the National Science Foundation. Any opinions, findings and conclusions or recommendations expressed in this publication are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.
+<p>
+</BODY>
+</HTML>

@@ -1,0 +1,70 @@
+<HTML>
+<BODY>
+<p>
+<b>Suggestions for using CM1 on yellowstone:</b>
+<p>
+The new NCAR supercomputing facility, <a href="https://www2.cisl.ucar.edu/resources/yellowstone">yellowstone</a>, is now available.  This page provides some suggestions for using CM1, based on some preliminary tests.
+<p>
+Please send questions and suggestions to gbryan at ucar dot edu. 
+<p>
+<hr>
+<p>
+<b>Compiling CM1:</b>
+<p>
+In the Makefile, I recommend using the section titled "Linux, distributed memory, Intel compiler (eg, SHARCNET's saw)." I recommend the following compiler flags:
+<p>
+<pre>OPTS = -I../include -O3 -xHost -ip -assume byterecl -fp-model precise -ftz</pre>
+<p>
+You will likely see warning messages such as the following:<br>
+<pre>
+param.f90(3677): remark #8290: Recommended relationship between field width 'W' and the number of fractional digits 'D' in this edit descriptor is 'W>=D+3'.
+</pre>
+These messages can be ignored  (they only affect text output and have no impact on CM1 performance). 
+<p>
+(Note:  I haven't tested any of the other compilers that are available on yellowstone.  If you have the time/interest in running some performance tests using other compilers, please keep me informed.  Thanks!)
+<p>
+<font color="red">Note for users of the atmospheric radition scheme (radopt=1) in CM1:</font>   (posted 7 Feb 2013)  There appears to be a problem when using the intel fortran compiler on yellowstone.  To prevent the problem, add this compiler flag to the Makefile:
+<font color="blue">-assume dummy_aliases</font>.  (This compiler flag is <i>only</i> needed if you are using "radopt = 1" in CM1.) 
+<p>
+<font color="red">Note for users of geyser:</font>  (Posted 7 Feb 2013)  If you want to use CM1 on geyser, you should compile CM1 on geyser.  The login nodes of yellowstone use a different processor, and so code compiled on yellowstone will not be optimized for the geyser processors, and may not actually run at all.  
+<p>
+<hr>
+<p>
+<b>Running CM1:</b>
+<p>
+I recommend using 16 MPI processes per yellowstone node.  Here is an example submission script that uses 512 total MPI processes:<br>
+<pre>
+#!/bin/csh
+
+#BSUB -P PXXXXXXXX             # project code
+#BSUB -W 12:00                 # wall-clock time (hrs:mins)
+#BSUB -x                       # exclusive use of node
+#BSUB -n 512                   # number of tasks in job
+#BSUB -R "span[ptile=16]"      # run 16 MPI tasks per node
+#BSUB -J cm1run                # job name
+#BSUB -o cm1run.out            # output file name
+#BSUB -e cm1run.err            # error file name
+#BSUB -q regular               # queue
+
+mpirun.lsf ./cm1.exe >&! cm1.print.out
+
+</pre>
+<p>
+If you use hyper-threading (which on bluefire was called Simultaneous Multi-Threading, or SMT) then you can use up to 32 tasks per node;  i.e., you can set ptile=32.  So far, I have found little improvement (only a few percent speedup) when using hyper-threading on yellowstone with CM1.  However, I haven't done much testing, so I would appreciate any feedback from any performance tests.  Thanks!
+<p>
+<hr>
+<p>
+<b>Performance of CM1:</b>
+<p>
+Regarding performance relative to bluefire:  if you do not use SMT on bluefire, then you should see a significant speedup on yellowstone when using the same number of processores/cores:  perhaps up to 50%.  If you have been using SMT on bluefire, you should see only ~5-10% speedup for equivalent runs on yellowstone.  
+<p>
+If you find that CM1 is running slower on yellowstone (than bluefire), please contact me.  
+<p>
+<hr>
+<p>
+<i>Last updated:  7 February 2013</i>
+<p>
+<a href="http://www2.mmm.ucar.edu/people/bryan/cm1/">return to cm1 home page</a>
+<p>
+</BODY>
+</HTML>

@@ -8,7 +8,7 @@ Cloud Model
 <b>New announcements:</b>
 <p>
 <ul>
-<li>24 March 2024:  An new version of CM1 (cm1r21.1) has been released.    <a href="downloadcode.html">Download the code here.</a>    
+<li>24 March 2024:  An new version of CM1 (cm1r21.1) has been released.    <a href="doc/downloadcode.html">Download the code here.</a>    
 </ul>
 <p>
 <ul>
@@ -23,13 +23,13 @@ Cloud Model
 <p>
 <i>In non-scientific terms</i>:  CM1 is a computer program used for atmospheric research.  It is designed for studies of relatively small-scale processes in the Earth's atmosphere, such as thunderstorms.  
 <p>
-For more information, please read these <a href="faq.html">answers to frequently asked questions</a> about CM1.
+For more information, please read these <a href="doc/faq.html">answers to frequently asked questions</a> about CM1.
 <p>
 <hr>
 <p>
 <b>Code</b>
 <p>
-<a href="downloadcode.html">Download the code here.</a>  (Most recent version:  cm1r21.1, available since 24 March 2024)
+<a href="doc/downloadcode.html">Download the code here.</a>  (Most recent version:  cm1r21.1, available since 24 March 2024)
 <p>
 <p>
 <hr>
@@ -38,16 +38,16 @@ For more information, please read these <a href="faq.html">answers to frequently
 <p>
 About CM1:<br>
 <ul>
-  <li><a href="pp.html">Parallel Performance</a> 
-  <li><a href="cm1_equations.pdf">The governing equations for CM1</a>  <font color="red">(Last updated:  21 October 2021)</font>
+  <li><a href="doc/pp.html">Parallel Performance</a> 
+  <li><a href="doc/cm1_equations.pdf">The governing equations for CM1</a>  <font color="red">(Last updated:  21 October 2021)</font>
   <li><a href="ACKNOWLEDGMENTS">Acknowledgments</a>.
-  <li><a href="faq.html">Answers to frequently asked questions</a> about CM1.
-  <li><a href="cm1_parallelization.pdf">presentation on CM1 parallelization</a> (pdf)  (From presentation at NCSA, December 2009)
+  <li><a href="doc/faq.html">Answers to frequently asked questions</a> about CM1.
+  <li><a href="doc/cm1_parallelization.pdf">presentation on CM1 parallelization</a> (pdf)  (From presentation at NCSA, December 2009)
 </ul>
 <p>
 Helpful Information for New Users of CM1:<br>
 <ul>
-  <li><a href="user_guide_brief.html">A brief summary of how to run cm1.</a>
+  <li><a href="doc/user_guide_brief.html">A brief summary of how to run cm1.</a>
   <li><a href="README.namelist">README.namelist</a> -- explains the various settings in the namelist.input file.
   <li><a href="namelists/">Pre-configured namelist.input files</a>
   <li><a href="soundings/">Soundings for idealized simulations</a>
@@ -58,10 +58,10 @@ Other Information about CM1:<br>
 <ul>
   <li><a href="CHANGES">CHANGES in release 21.1</a> -- new features, modifications, and code fixes for the newest version (24 March 2024)
     <ul>
-    <li><a href="changes.html">History of all CHANGES</a> (from r2 to present)
+    <li><a href="doc/changes.html">History of all CHANGES</a> (from r2 to present)
     </ul>
-  <li><a href="known_problems.html">Known problems and fixes</a> (last updated:  5 January 2012)
-  <li><a href="new_microphysics.pdf">Instructions for adding a new microphysics scheme to CM1</a> (pdf)
+  <li><a href="doc/known_problems.html">Known problems and fixes</a> (last updated:  5 January 2012)
+  <li><a href="doc/new_microphysics.pdf">Instructions for adding a new microphysics scheme to CM1</a> (pdf)
   <li><a href="grads/">Some useful GrADS scripts</a>
   <li><a href="programs/">Some useful programs for MPI users</a>
 </ul>
@@ -89,7 +89,7 @@ Here are reports on some basic tests of the accuracy and capability of CM1.  (No
 <u>Peer-reviewed articles</u> that use CM1: (Please contact George Bryan if you have something to add to this list.) 
 <i>Last updated:  March 2024</i>
 <p>
-Check out this <a href="cm1journals.html">list of journals that have published articles using CM1</a>.
+Check out this <a href="doc/cm1journals.html">list of journals that have published articles using CM1</a>.
 <p>
 <img src="cm1pubs-211217.png">
 <p>
