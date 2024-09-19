@@ -4,7 +4,7 @@
 Cloud Model
 
 ## New announcements:
-* 24 March 2024:  A new version of CM1 `cm1r21.1` has been released.  [Download the code here](downloadcode).    
+* 24 March 2024:  A new version of CM1 `cm1r21.1` has been released.  [Download the code here](releases).    
 
 * [Here is a sample submission script for NCAR's derecho supercomputer](scripts/cm1run_derecho)  **(Last updated:  24 March 2024)**
 
@@ -18,7 +18,7 @@ For more information, please read these [answers to frequently asked questions](
 
 ## Code
 
-[Download the code here](downloadcode)  (Most recent version:  `cm1r21.1` available since 24 March 2024)
+[Download the code here](releases)  (Most recent version:  `cm1r21.1` available since 24 March 2024)
 
 ## Documentation
   
