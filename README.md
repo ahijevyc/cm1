@@ -4,7 +4,7 @@
 Cloud Model
 
 ## New announcements:
-* 24 March 2024:  An new version of CM1 `cm1r21.1` has been released.  [Download the code here](downloadcode).    
+* 24 March 2024:  A new version of CM1 `cm1r21.1` has been released.  [Download the code here](releases).    
 
 * [Here is a sample submission script for NCAR's derecho supercomputer](scripts/cm1run_derecho)  **(Last updated:  24 March 2024)**
 
@@ -18,7 +18,7 @@ For more information, please read these [answers to frequently asked questions](
 
 ## Code
 
-[Download the code here](downloadcode)  (Most recent version:  `cm1r21.1` available since 24 March 2024)
+[Download the code here](releases)  (Most recent version:  `cm1r21.1` available since 24 March 2024)
 
 ## Documentation
   
@@ -26,17 +26,17 @@ For more information, please read these [answers to frequently asked questions](
 
 - [Parallel Performance](doc/pp.md)
 - [The governing equations for CM1](doc/cm1_equations.pdf)  **(Last updated:  21 October 2021)**
-- [Acknowledgments](https://www2.mmm.ucar.edu/people/bryan/cm1/ACKNOWLEDGMENTS).
+- [Acknowledgments](doc/ACKNOWLEDGMENTS).
 - [Answers to frequently asked questions](doc/faq.md) about CM1.
 - [presentation on CM1 parallelization](doc/cm1_parallelization.pdf) (pdf)  (From presentation at NCSA, December 2009)
 
 ### Helpful Information for New Users of CM1:
 
 - [A brief summary of how to run cm1](doc/user_guide_brief.md)
-- [README.namelist](https://www2.mmm.ucar.edu/people/bryan/cm1/README.namelist) -- explains the various settings in the namelist.input file.
-- [Pre-configured namelist.input files](https://www2.mmm.ucar.edu/people/bryan/cm1/namelists)
-- [Soundings for idealized simulations](https://www2.mmm.ucar.edu/people/bryan/cm1/soundings)
-- [Sample submission scripts for NCAR's supercomputers](https://www2.mmm.ucar.edu/people/bryan/cm1/scripts)
+- [README.namelist](README.namelist) -- explains the various settings in the namelist.input file.
+- [Pre-configured namelist.input files](namelists)
+- [Soundings for idealized simulations](soundings)
+- [Sample submission scripts for NCAR's supercomputers](scripts)
 
 ### Other Information about CM1:
 
@@ -45,7 +45,7 @@ For more information, please read these [answers to frequently asked questions](
 - [Known problems and fixes](doc/known_problems.md) (last updated:  5 January 2012)
 - [Instructions for adding a new microphysics scheme to CM1](doc/new_microphysics.pdf) (pdf)
 - [Some useful GrADS scripts](scripts/grads)
-- [Some useful programs for MPI users](https://www2.mmm.ucar.edu/people/bryan/cm1/programs)
+- [Some useful programs for MPI users](programs)
 
 ## Testing and evaluation of CM1
 
@@ -548,8 +548,7 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--225-->
     <li>Peters, J.M., C.J. Nowotarski, and H. Morrison, 2019: <a href="https://dx.doi.org/10.1175/JAS-D-19-0096.1">The role of vertical wind shear in modulating maximum supercell updraft velocities</a>.  <i>J. Atmos. Sci.,</i> doi:10.1175/JAS-D-19-0096.1.
     <!--224-->
-    <li>Kirshbaum, D. J., and D. N. Straub, 2019: <a href="https://dx.doi.org/10.1002/qj.3609">Linear theory of shallow convection in deep, vertically sheared atmospheres</a>. <i>Q J R Meteorol Soc.,</i> doi:10.1002/qj.3609. 
-
+    <li>Kirshbaum, D. J., and D. N. Straub, 2019: <a href="https://dx.doi.org/10.1002/qj.3609">Linear theory of shallow convection in deep, vertically sheared atmospheres</a>. <i>Q J R Meteorol Soc.,</i> doi:10.1002/qj.3609.
     <!--223-->
     <li>Swenson, S., B. Argrow, E. Frew, S. Borenstein, and J. Keeler, 2019: <a href="https://dx.doi.org/10.3390/s19092149">Development and Deployment of Air-Launched Drifters from Small UAS</a>. <i>Sensors,</i> <b>19,</b> doi:10.3390/s19092149.
     <!--222-->

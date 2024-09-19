@@ -19,45 +19,45 @@ Solution: download the following files and place them in the "src" directory. Th
 
 Files for `cm1r15`:
 
-*   [solve.F](cm1r15_fixed/solve.F)
-*   [sound.F](cm1r15_fixed/sound.F)
-*   [sounde.F](cm1r15_fixed/sounde.F)
+*   [solve.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r15_fixed/solve.F)
+*   [sound.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r15_fixed/sound.F)
+*   [sounde.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r15_fixed/sounde.F)
 
 Files for `cm1r14`:
 
-*   [solve.F](cm1r14_fixed/solve.F)
-*   [sound.F](cm1r14_fixed/sound.F)
-*   [sounde.F](cm1r14_fixed/sounde.F)
-*   [thompson.F](cm1r14_fixed/thompson.F)
-*   [morrison.F](cm1r14_fixed/morrison.F)
+*   [solve.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r14_fixed/solve.F)
+*   [sound.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r14_fixed/sound.F)
+*   [sounde.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r14_fixed/sounde.F)
+*   [thompson.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r14_fixed/thompson.F)
+*   [morrison.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r14_fixed/morrison.F)
 
 Files for `cm1r13`:
 
-*   [solve.F](cm1r13_fixed/solve.F)
-*   [sound.F](cm1r13_fixed/sound.F)
-*   [sounde.F](cm1r13_fixed/sounde.F)
+*   [solve.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r13_fixed/solve.F)
+*   [sound.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r13_fixed/sound.F)
+*   [sounde.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r13_fixed/sounde.F)
 
 Files for `cm1r12`:
 
-*   [solve.F](cm1r12_fixed/solve.F)
-*   [sound.F](cm1r12_fixed/sound.F)
-*   [sounde.F](cm1r12_fixed/sounde.F)
+*   [solve.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r12_fixed/solve.F)
+*   [sound.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r12_fixed/sound.F)
+*   [sounde.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r12_fixed/sounde.F)
 
 To reiterate: this bug only affects runs with terrain `terrain_flag = .true.` and only when using a vertically stretched grid `stretch_z = 1`.
 
-\----------------
+* * *
 
 **Known problems in `cm1r14`:** (posted 12 January 2011)
 
-**1\. Thompson and Morrison microphysics (only if `neweqts={1,2}`):** There is a bug with the implementation of the mass- and energy-conserving equations for the Thompson (ptype=3) and Morrison (ptype=5) microphysics schemes in cm1r14. There is no problem if neweqts=0 ("traditional" equation set). This bug _only_ impacts the Thompson and Morrison microphysics schemes (ptype = 3 and 5, respectively).
+**1\. Thompson and Morrison microphysics (only if `neweqts={1,2}`):** There is a bug with the implementation of the mass- and energy-conserving equations for the Thompson (ptype=3) and Morrison (ptype=5) microphysics schemes in `cm1r14`. There is no problem if neweqts=0 ("traditional" equation set). This bug _only_ impacts the Thompson and Morrison microphysics schemes (ptype = 3 and 5, respectively).
 
 Solution: download the following files and place them in the "src" directory. Then re-compile and re-run. (For `cm1r14` only.)
 
-*   [solve.F](cm1r14_fixed/solve.F)
-*   [thompson.F](cm1r14_fixed/thompson.F)
-*   [morrison.F](cm1r14_fixed/morrison.F)
+*   [solve.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r14_fixed/solve.F)
+*   [thompson.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r14_fixed/thompson.F)
+*   [morrison.F](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1r14_fixed/morrison.F)
 
-Explanation: there was an "order-of-operations" error, wherein the old pressure and the new temperature were used to calculate the new value of potential temperature. This bug caused cold pools to be too strong (by ~15% at the lowest model level) in idealized simulations of midlatitude squall lines. The magnitude of errors in other phenomena (e.g., supercells, hurricanes) is unknown at this time. Users of cm1r14 are encouraged to download the modified code (above) and re-run their simulations.
+Explanation: there was an "order-of-operations" error, wherein the old pressure and the new temperature were used to calculate the new value of potential temperature. This bug caused cold pools to be too strong (by ~15% at the lowest model level) in idealized simulations of midlatitude squall lines. The magnitude of errors in other phenomena (e.g., supercells, hurricanes) is unknown at this time. Users of `cm1r14` are encouraged to download the modified code (above) and re-run their simulations.
 
 To reiterate: this bug only affects `cm1r14`, and it only affects the Thompson and Morrison microphysics schemes if `neweqts=1` or `neweqts=2`.
 
