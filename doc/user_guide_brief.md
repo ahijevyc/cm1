@@ -49,13 +49,13 @@ Valid for `cm1r18` and later versions
 
 For more information about model settings, see [`README.namelist`](/doc/README.namelist).
 
-For more information about running on distributed memory computers (with MPI), see the README.parallel file.
+For more information about running on distributed memory computers (with MPI), see the `README.parallel` file.
 
-For more information about running with terrain, see [`README.terrain`](/doc/README.terrain).
+For more information about running with terrain, see the `README.terrain` file.
 
-For more information about running the axisymmetric version of the model, see the README.axisymm file.
+For more information about running the axisymmetric version of the model, see the `README.axisymm` file.
 
-For more information about running the model with stretched grids, see the README.stretch file.
+For more information about running the model with stretched grids, see the `README.stretch` file.
 
 * * *
 
