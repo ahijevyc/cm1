@@ -12,7 +12,7 @@ Valid for `cm1r18` and later versions
 #### Step 1: Download the code.
 
 1.  Read through the [license](/LICENSE).
-2.  If you agree to the terms in the license, they you may [download and use CM1](/downloadcode).
+2.  If you agree to the terms in the license, they you may [download and use CM1](/releases).
 3.  CM1 is distributed as a gzipped tar file that can be downloaded from this page.
 4.  Place the file on the disk that you will be running the model. Since the output from CM1 can be large, you should place the file on a disk with a substantial amount of free space (i.e., several GB of disk space should be available).
 5.  To uncompress and extract the files, type: `gunzip cm1r18.tar.gz` followed by `tar xvf cm1r18.tar`
