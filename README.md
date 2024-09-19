@@ -26,7 +26,7 @@ For more information, please read these [answers to frequently asked questions](
 
 - [Parallel Performance](doc/pp.md)
 - [The governing equations for CM1](doc/cm1_equations.pdf)  **(Last updated:  21 October 2021)**
-- [Acknowledgments](https://www2.mmm.ucar.edu/people/bryan/cm1/ACKNOWLEDGMENTS).
+- [Acknowledgments](doc/ACKNOWLEDGMENTS).
 - [Answers to frequently asked questions](doc/faq.md) about CM1.
 - [presentation on CM1 parallelization](doc/cm1_parallelization.pdf) (pdf)  (From presentation at NCSA, December 2009)
 
@@ -36,7 +36,7 @@ For more information, please read these [answers to frequently asked questions](
 - [README.namelist](README.namelist) -- explains the various settings in the namelist.input file.
 - [Pre-configured namelist.input files](namelists)
 - [Soundings for idealized simulations](soundings)
-- [Sample submission scripts for NCAR's supercomputers](https://www2.mmm.ucar.edu/people/bryan/cm1/scripts)
+- [Sample submission scripts for NCAR's supercomputers](scripts)
 
 ### Other Information about CM1:
 
@@ -45,7 +45,7 @@ For more information, please read these [answers to frequently asked questions](
 - [Known problems and fixes](doc/known_problems.md) (last updated:  5 January 2012)
 - [Instructions for adding a new microphysics scheme to CM1](doc/new_microphysics.pdf) (pdf)
 - [Some useful GrADS scripts](scripts/grads)
-- [Some useful programs for MPI users](https://www2.mmm.ucar.edu/people/bryan/cm1/programs)
+- [Some useful programs for MPI users](programs)
 
 ## Testing and evaluation of CM1
 
