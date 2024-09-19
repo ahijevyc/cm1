@@ -32,7 +32,7 @@ For more information, please read these [answers to frequently asked questions](
 
 ### Helpful Information for New Users of CM1:
 
-- [A brief summary of how to run cm1](doc/user_guide_brief.md)
+- [A brief summary of how to run cm1](doc/README.md)
 - [README.namelist](README.namelist) -- explains the various settings in the namelist.input file.
 - [Pre-configured namelist.input files](namelists)
 - [Soundings for idealized simulations](soundings)
