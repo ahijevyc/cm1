@@ -2,7 +2,7 @@
 
 ## Answers to Frequently Asked Questions about CM1
 
-**Updated for cm1r15, 13 January 2011**
+**Updated for `cm1r15`, 13 January 2011**
 
 1.  What is CM1?
 
