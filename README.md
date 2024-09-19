@@ -34,8 +34,8 @@ For more information, please read these [answers to frequently asked questions](
 
 - [A brief summary of how to run cm1](doc/user_guide_brief.md)
 - [README.namelist](README.namelist) -- explains the various settings in the namelist.input file.
-- [Pre-configured namelist.input files](https://www2.mmm.ucar.edu/people/bryan/cm1/namelists)
-- [Soundings for idealized simulations](https://www2.mmm.ucar.edu/people/bryan/cm1/soundings)
+- [Pre-configured namelist.input files](namelists)
+- [Soundings for idealized simulations](soundings)
 - [Sample submission scripts for NCAR's supercomputers](https://www2.mmm.ucar.edu/people/bryan/cm1/scripts)
 
 ### Other Information about CM1:
