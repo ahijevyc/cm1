@@ -33,7 +33,7 @@ For more information, please read these [answers to frequently asked questions](
 ### Helpful Information for New Users of CM1:
 
 - [A brief summary of how to run cm1](doc/user_guide_brief.md)
-- [README.namelist](https://www2.mmm.ucar.edu/people/bryan/cm1/README.namelist) -- explains the various settings in the namelist.input file.
+- [README.namelist](doc/README.namelist) -- explains the various settings in the namelist.input file.
 - [Pre-configured namelist.input files](https://www2.mmm.ucar.edu/people/bryan/cm1/namelists)
 - [Soundings for idealized simulations](https://www2.mmm.ucar.edu/people/bryan/cm1/soundings)
 - [Sample submission scripts for NCAR's supercomputers](https://www2.mmm.ucar.edu/people/bryan/cm1/scripts)
