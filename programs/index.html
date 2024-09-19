@@ -1,0 +1,35 @@
+<HTML>
+<BODY>
+<p>
+<b>Fortran programs that combine the tiled GrADS output from CM1 into one file:  valid for cm1r12 and later versions</b><br>
+(used for processing the output from CM1 when using MPI processing and when the GrADS output format is selected):
+<p>
+<font color="red">Note:  these new, more efficient "combine" programs have been released with cm1r16:</font>
+<ul>
+  <li><a href="combine_MPI_s.F">combine_MPI_s.F</a>:  combines scalar (*_s) files
+  <li><a href="combine_MPI_u.F">combine_MPI_u.F</a>:  combines u files
+  <li><a href="combine_MPI_v.F">combine_MPI_v.F</a>:  combines v files
+  <li><a href="combine_MPI_w.F">combine_MPI_w.F</a>:  combines w files
+</ul>
+<p>
+Usage:  compile with a fortran compiler.  Then, run the program, and answer all the questions.  Note:  you will need to have a copy of your GrADS descriptor file (i.e., files ending in ".ctl") in the same directory.
+<p>
+Output:  two files are created:  a new descriptor file (cm1out_MPI.ctl) and a new GrADS data file.
+<p>
+<hr>
+<p>
+<b>Fortran program to combine the tiled netcdf output</b><br>
+(same as above, but for netcdf output format)
+<ul>
+  <li><a href="netcdf/combine.F">combine.F</a>:  fortran program (cm1r11 ... contributed by Dan Kirshbaum, U. Reading)
+  <li><a href="netcdf/combine_r12.F">combine_r12.F</a>:  fortran program (cm1r12 and later versions ... contributed by Lou Wicker, NSSL)
+  <li><a href="netcdf/compile">compile</a>:  script used to compile the program
+</ul>
+<p>
+<hr>
+<p>
+<a href="http://www.mmm.ucar.edu/people/bryan/cm1/">return to cm1 home page</a>
+<p>
+<i>Last updated:  6 February 2012</i>
+</BODY>
+</HTML>
