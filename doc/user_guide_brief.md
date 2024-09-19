@@ -22,15 +22,15 @@ Valid for `cm1r18` and later versions
 
 #### Step 2: Setup the code for your study.
 
-1.  **Edit `Makefile`:** cd into the `src` directory. In "Makefile," select the operating system and parallelization method that is appropriate for your hardware, and uncomment all lines in that section. Compiler flags can also be set/changed in this file. If you want to use netcdf or hdf5 output, uncomment the appropriate lines at the very top of Makefile and set the paths to your netcdf/hdf5 distribution.
+1.  **Edit `Makefile`:** cd into the `src` directory. In `Makefile`, select the operating system and parallelization method that is appropriate for your hardware, and uncomment all lines in that section. Compiler flags can also be set/changed in this file. If you want to use netcdf or hdf5 output, uncomment the appropriate lines at the very top of `Makefile` and set the paths to your netcdf/hdf5 distribution.
 2.  **Edit `base.F` (if necessary):** Modify the base-state conditions, as appropriate. There are two sections: one for the hydrostatic pressure, temperature, and moisture sounding (see "isnd" section); and one for the initial winds (u and v components) (see "iwnd" section).
 3.  **Edit `init3d.F` (if necessary):** In `init3d.F,` you can add perturbations to the base state. Several default options are available.
 4.  **Edit `init_terrain.F` (if necessary):** If you are using terrain, you will have to specify the terrain via the "zs" array in the file `init_terrain.F`.
-5.  **Edit `init_surface.F` (if necessary):** If you are using surface fluxes of heat/moisture/momentum, then you might have to specify the horizontal distribution of several variables in the file `init_surface.F`. See the param12 section in [`README.namelist`](README.namelist) for more information.
+5.  **Edit `init_surface.F` (if necessary):** If you are using surface fluxes of heat/moisture/momentum, then you might have to specify the horizontal distribution of several variables in the file `init_surface.F`. See the param12 section in [`README.namelist`](/README.namelist) for more information.
 6.  **Compile the code:** Type `make` within the "src" directory. On some machines, you may need to use "gmake" instead.
-7.  **Edit `namelist.input`:** If the code compiled without error, cd into the "run" directory and edit "namelist.input". See [`README.namelist`](README.namelist) for guidance. Here, you set the domain dimensions, as well as the number of processors (using "nodex" and "nodey"). See the README files in the main directory for more information.
+7.  **Edit `namelist.input`:** If the code compiled without error, cd into the "run" directory and edit "namelist.input". See [`README.namelist`](/README.namelist) for guidance. Here, you set the domain dimensions, as well as the number of processors (using "nodex" and "nodey"). See the README files in the main directory for more information.
 8.  **Place the "input\_sounding" file in the same directory as `cm1.exe` (if necessary):** If you are supplying an external sounding file, make sure it is called `input_sounding` and place it in the same directory as `cm1.exe`. See ["Soundings for idealized simulations"](https://www2.mmm.ucar.edu/people/bryan/cm1/soundings/) for more information.
-9.  **Place the `LANDUSE.TBL` file in the same directory as `cm1.exe` (if necessary):** If you are using surface fluxes of heat/momentum/moisture, or if you are using the atmospheric radiation scheme, then you need to specify the surface conditions. (See the param12 section of [`README.namelist`](README.namelist) for more information.) The `LANDUSE.TBL` file comes with cm1 in the `run` directory.
+9.  **Place the `LANDUSE.TBL` file in the same directory as `cm1.exe` (if necessary):** If you are using surface fluxes of heat/momentum/moisture, or if you are using the atmospheric radiation scheme, then you need to specify the surface conditions. (See the param12 section of [`README.namelist`](/README.namelist) for more information.) The `LANDUSE.TBL` file comes with cm1 in the `run` directory.
 
 * * *
 
@@ -47,15 +47,15 @@ Valid for `cm1r18` and later versions
 
 #### For more information ...
 
-For more information about model settings, see [`README.namelist`](README.namelist).
+For more information about model settings, see [`README.namelist`](/README.namelist).
 
-For more information about running on distributed memory computers (with MPI), see the `README.parallel` file.
+For more information about running on distributed memory computers (with MPI), see [`README.parallel`](/README.parallel).
 
-For more information about running with terrain, see the `README.terrain` file.
+For more information about running with terrain, see [`README.terrain`](/README.terrain).
 
-For more information about running the axisymmetric version of the model, see the `README.axisymm` file.
+For more information about running the axisymmetric version of the model, see [`README.axisymm`](/README.axisymm).
 
-For more information about running the model with stretched grids, see the `README.stretch` file.
+For more information about running the model with stretched grids, see [`README.stretch`](/README.stretch).
 
 * * *
 
