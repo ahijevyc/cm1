@@ -126,6 +126,14 @@ def load_era5(time: pd.Timestamp, campaign: bool = True, model_levels=False) -> 
 
         # For some reason the "zero" variable is different for surface_pressure
         ds = xarray.open_mfdataset(local_files, drop_variables="zero")
+
+        if model_levels:
+            # Derive pressure from a and b coefficients
+            ds["P"] = ds.SP * ds.b_model + ds.a_model
+            assert ds.a_model.attrs["units"] == ds.SP.attrs["units"]
+            ds["P"].attrs.update(dict(units=ds.SP.attrs["units"], long_name="pressure"))
+            ds["P"] = ds["P"].transpose(*ds.U.dims).astype(ds.U.dtype)
+
     else:
         # If not local download from S3 bucket.
         ds = download_era5_data(time)
