@@ -1,8 +1,5 @@
 <img src="https://www2.mmm.ucar.edu/people/bryan/cm1/NSF-NCAR_Lockup-UCAR-Dark_102523.png" width="30%"/>
 
-# cm1
-Cloud Model
-
 ## New announcements:
 * 24 March 2024:  A new version of CM1 `cm1r21.1` has been released.  [Download the code here](releases).    
 
