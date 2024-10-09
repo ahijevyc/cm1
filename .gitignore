@@ -1,2 +1,17 @@
 *.pyc
 *.ipynb_checkpoints
+run/qr_acr_qgV2.dat
+run/freezeH2O.dat
+run/p3_lookupTable_1.dat-v5.4_3momI
+run/p3_lookupTable_1.dat-v5.4_2momI
+run/RRTMG_SW_DATA
+run/RRTMG_LW_DATA
+run/ishmael-qi-qc.bin
+run/ishmael-qi-qr.bin
+run/qr_acr_qsV2.dat
+run/config_files/sea_breeze/RRTMG_SW_DATA
+run/config_files/sea_breeze/RRTMG_LW_DATA
+run/config_files/cpm_RadConvEquil/RRTMG_SW_DATA
+run/config_files/cpm_RadConvEquil/RRTMG_LW_DATA
+run/p3_lookupTable_2.dat-v5.3
+run/ishmael-gamma-tab.bin
