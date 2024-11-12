@@ -45,6 +45,7 @@ def main() -> None:
     logging.warning(f"select {args}")
     ds = ds.sel(longitude=args.lon, latitude=args.lat, method="nearest")
     skewt(ds)
+    plt.show()
 
 
 def skewt(
