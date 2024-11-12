@@ -1,5 +1,7 @@
 *.pyc
 *.ipynb_checkpoints
+*.egg-info
+build/
 run/qr_acr_qgV2.dat
 run/freezeH2O.dat
 run/p3_lookupTable_1.dat-v5.4_3momI
