@@ -41,6 +41,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--campaign", action="store_true", help="use campaign storage")
     parser.add_argument("--glade", default="/", help="parent of glade directory")
+    parser.add_argument("--nearest", type=int, default=1, help="number of nearest neighbors to average")
     args = parser.parse_args()
     logging.info(args)
     return args
@@ -57,6 +58,8 @@ def main() -> None:
     import pickle
 
     args = parse_args()
+    if args.nearest != 1:
+        raise NotImplementedError("can only do nearest neighbor now") 
     ofile = "t.nc"
     if os.path.exists(ofile):
         logging.warning(f"read {ofile}")
@@ -67,6 +70,7 @@ def main() -> None:
             pd.to_datetime(args.time),
             campaign=args.campaign,
             model_levels=args.model_levels,
+            glade=args.glade,
         )
     with open(ofile, "wb") as file:
         pickle.dump(ds, file)

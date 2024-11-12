@@ -210,7 +210,7 @@ def skewt(
     skew.ax.set_xlim(-40, 55)
     skew.ax.set_ylim(None, ptop)
 
-    title = f"{ds.time.data} {ds.longitude.data} {ds.latitude.data}"
+    title = f"{ds.time.data} {ds.longitude.data:.3f} {ds.latitude.data:.3f}"
     title += f"\nwind barbs and hodograph in {plot_barbs_units} {barb_increments}"
     title += f"\nsfcape={sfcape:~.0f}   sfcin={sfcin:~.0f}   storm_u={storm_u:~.1f}   storm_v={storm_v:~.1f}"
     title += f"\n0-3km srh+={srh03_pos:~.0f}   srh-={srh03_neg:~.0f}   srh(tot)={srh03_tot:~.0f}"
