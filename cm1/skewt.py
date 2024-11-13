@@ -23,7 +23,7 @@ from metpy.units import units
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from pint import Quantity
 
-from cm1.io import load_era5, parse_args
+from cm1.io import load_era5, neighborhood, parse_args
 
 
 def main() -> None:
@@ -43,7 +43,15 @@ def main() -> None:
     )
 
     logging.warning(f"select {args}")
-    ds = ds.sel(longitude=args.lon, latitude=args.lat, method="nearest")
+
+    if args.neighbors == 1:
+        ds = ds.sel(
+            longitude=args.lon,
+            latitude=args.lat,
+            method="nearest",
+        )
+    else:
+        ds = neighborhood(args, ds)
     skewt(ds)
     plt.show()
 
@@ -210,7 +218,7 @@ def skewt(
     skew.ax.set_xlim(-40, 55)
     skew.ax.set_ylim(None, ptop)
 
-    title = f"{ds.time.data} {ds.longitude.data:.3f} {ds.latitude.data:.3f}"
+    title = f"{ds.time.data} {ds.longitude.item():.3f} {ds.latitude.item():.3f}"
     title += f"\nwind barbs and hodograph in {plot_barbs_units} {barb_increments}"
     title += f"\nsfcape={sfcape:~.0f}   sfcin={sfcin:~.0f}   storm_u={storm_u:~.1f}   storm_v={storm_v:~.1f}"
     title += f"\n0-3km srh+={srh03_pos:~.0f}   srh-={srh03_neg:~.0f}   srh(tot)={srh03_tot:~.0f}"

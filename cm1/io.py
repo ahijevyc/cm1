@@ -34,17 +34,45 @@ def parse_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(description="get ERA5 sounding at time, lon, lat")
     parser.add_argument("time", help="time")
-    parser.add_argument("lon", help="longitude in degrees East (0-360)")
-    parser.add_argument("lat", help="latitude in degrees North")
+    parser.add_argument("lon", type=float, help="longitude in degrees East (0-360)")
+    parser.add_argument("lat", type=float, help="latitude in degrees North")
     parser.add_argument(
         "--model_levels", action="store_true", help="native model levels"
     )
     parser.add_argument("--campaign", action="store_true", help="use campaign storage")
     parser.add_argument("--glade", default="/", help="parent of glade directory")
-    parser.add_argument("--nearest", type=int, default=1, help="number of nearest neighbors to average")
+    parser.add_argument(
+        "--neighbors",
+        type=int,
+        default=1,
+        help="number of neighbors to average",
+    )
     args = parser.parse_args()
     logging.info(args)
     return args
+
+
+from sklearn.neighbors import BallTree as BallTree
+
+
+def neighborhood(args, ds):
+    """mean in neighborhood
+    of args.lat, args.lon
+    """
+    lat2d, lon2d = np.meshgrid(ds.latitude, ds.longitude)
+    latlon = np.deg2rad(np.vstack([lat2d.ravel(), lon2d.ravel()]).T)
+    X = np.deg2rad([[args.lat, args.lon]])
+
+    (idx,) = BallTree(latlon, metric="haversine").query(
+        X, return_distance=False, k=args.neighbors
+    )
+
+    ds = ds.stack(z=("latitude", "longitude")).isel(z=idx).mean(dim="z")
+    ds = ds.assign_coords(
+        latitude=[args.lat], longitude=[args.lon]
+    )
+    ds.attrs["neighbors"] = args.neighbors
+    return ds
 
 
 def main() -> None:
@@ -58,8 +86,7 @@ def main() -> None:
     import pickle
 
     args = parse_args()
-    if args.nearest != 1:
-        raise NotImplementedError("can only do nearest neighbor now") 
+
     ofile = "t.nc"
     if os.path.exists(ofile):
         logging.warning(f"read {ofile}")
@@ -75,7 +102,15 @@ def main() -> None:
     with open(ofile, "wb") as file:
         pickle.dump(ds, file)
 
-    ds = ds.sel(longitude=args.lon, latitude=args.lat, method="nearest")
+    if args.neighbors == 1:
+        ds = ds.sel(
+            longitude=args.lon,
+            latitude=args.lat,
+            method="nearest",
+        )
+    else:
+        ds = neighborhood(args, ds)
+
     print(to_sounding_txt(ds))
 
 
