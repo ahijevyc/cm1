@@ -52,25 +52,78 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
+import numpy as np
 from sklearn.neighbors import BallTree as BallTree
 
 
+def mean_lat_lon(lats_deg, lons_deg):
+    """
+    Calculates the mean latitude and longitude of a set of points on a sphere.
+
+    Args:
+        lats (list): List of latitudes in degrees.
+        lons (list): List of longitudes in degrees.
+
+    Returns:
+        tuple: Mean latitude and longitude in degrees.
+    """
+
+    # Convert to radians
+    lats = np.radians(lats_deg)
+    lons = np.radians(lons_deg)
+
+    # Calculate Cartesian coordinates
+    x = np.cos(lats) * np.cos(lons)
+    y = np.cos(lats) * np.sin(lons)
+    z = np.sin(lats)
+
+    # Calculate mean Cartesian coordinates
+    x_mean = np.mean(x)
+    y_mean = np.mean(y)
+    z_mean = np.mean(z)
+
+    # Convert back to spherical coordinates
+    lon_mean = np.arctan2(y_mean, x_mean)
+    hyp = np.sqrt(x_mean**2 + y_mean**2)
+    lat_mean = np.arctan2(z_mean, hyp)
+
+    # Convert back to degrees
+    lat_mean = np.degrees(lat_mean)
+    lon_mean = np.degrees(lon_mean)
+
+    lat_mean = xarray.DataArray(lat_mean, attrs=lats_deg.attrs)
+    lon_mean = xarray.DataArray(lon_mean, attrs=lons_deg.attrs)
+
+    return lat_mean, lon_mean
+
+
 def neighborhood(args, ds):
-    """mean in neighborhood
+    """mean in neighborhood of args.neighbor points
     of args.lat, args.lon
     """
-    lat2d, lon2d = np.meshgrid(ds.latitude, ds.longitude)
+    # indexing="ij" allows Dataset.stack dim order to be "latitude", "longitude"
+    lat2d, lon2d = np.meshgrid(ds.latitude, ds.longitude, indexing="ij")
     latlon = np.deg2rad(np.vstack([lat2d.ravel(), lon2d.ravel()]).T)
     X = np.deg2rad([[args.lat, args.lon]])
 
     (idx,) = BallTree(latlon, metric="haversine").query(
         X, return_distance=False, k=args.neighbors
     )
-
-    ds = ds.stack(z=("latitude", "longitude")).isel(z=idx).mean(dim="z")
-    ds = ds.assign_coords(
-        latitude=[args.lat], longitude=[args.lon]
-    )
+    ds = ds.stack(z=("latitude", "longitude")).isel(z=idx)
+    print(ds.latitude, ds.longitude)
+    lat_mean, lon_mean = mean_lat_lon(ds.latitude, ds.longitude)
+    print(lat_mean, lon_mean)
+    # TODO: remove assertions after function is bug-free
+    # assert mean location is close to what was requested.
+    assert abs(lat_mean - args.lat) < 1, f"meanlat {lat_mean} args.lat {args.lat}"
+    assert (
+        np.cos(np.radians(lon_mean)) - np.cos(np.radians(args.lon))
+    ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.cos(np.radians(lon_mean)) - np.cos(np.radians(args.lon))}"
+    assert (
+        np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))
+    ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))}"
+    ds = ds.mean(dim="z")  # lose `z` `latitude` `longitude`
+    ds = ds.assign_coords(latitude=lat_mean, longitude=lon_mean)
     ds.attrs["neighbors"] = args.neighbors
     return ds
 
@@ -196,7 +249,7 @@ def load_era5(
             # Derive pressure from a and b coefficients
             ds["P"] = ds.a_model + ds.b_model * ds.SP
             ds["P"].attrs.update(dict(long_name="pressure"))
-            ds["P"] = ds["P"].transpose(*ds.U.dims)  # keep dim order consistent
+            ds["P"] = ds["P"].transpose(*ds.U.dims)  # keep dim order consistent with U
             ds["P_half"] = ds.a_half + ds.b_half * ds.SP
             ds["P_half"].attrs.update(dict(long_name="pressure"))
             # Invariant field geopotential height at surface
@@ -218,6 +271,7 @@ def load_era5(
             z_h = ds.Zsfc.assign_coords(half_level=ds.half_level.max())
             Z = []  # geopotential on full levels
             Z_h = [z_h]  # geopotential on half levels
+            # Loop from last to first level (sfc upward)
             for level in ds.level[
                 ::-1
             ]:  # accumulate geopotential in z_h upward from sfc
