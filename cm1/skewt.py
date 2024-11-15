@@ -7,6 +7,9 @@ data, as well as dry adiabats, moist adiabats, and mixing lines on the Skew-T di
 """
 
 import logging
+import os
+import pdb
+import pickle
 from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
@@ -35,12 +38,21 @@ def main() -> None:
     """
 
     args = parse_args()
-    ds = load_era5(
-        pd.to_datetime(args.time),
-        campaign=args.campaign,
-        model_levels=args.model_levels,
-        glade=args.glade,
-    )
+
+    ofile = "t.nc"
+    if os.path.exists(ofile):
+        logging.warning(f"read {ofile}")
+        with open(ofile, "rb") as file:
+            ds = pickle.load(file)
+    else:
+        ds = load_era5(
+            pd.to_datetime(args.time),
+            campaign=args.campaign,
+            model_levels=args.model_levels,
+            glade=args.glade,
+        )
+    with open(ofile, "wb") as file:
+        pickle.dump(ds, file)
 
     logging.warning(f"select {args}")
 
@@ -107,9 +119,11 @@ def skewt(
     # Otherwise pressure is ds.level, a 1-D array of pressure.
     height = ds["Z"]
     p = ds["P"]
-    T = ds["T"]
+    t = ds["T"]
     e = mpcalc.vapor_pressure(p, ds.Q)
     Td = mpcalc.dewpoint(e)
+    if any(Td > t):
+        logging.warning("some Td > T")
 
     if "Tv" not in ds:
         ds["Tv"] = mpcalc.thermo.virtual_temperature(ds.T, ds.Q)
@@ -130,7 +144,7 @@ def skewt(
 
     # Calculate LCL pressure and label it on SkewT.
     lcl_pressure, lcl_temperature = mpcalc.lcl(
-        p.sel(level=sfc), T.sel(level=sfc), Td.sel(level=sfc)
+        p.sel(level=sfc), t.sel(level=sfc), Td.sel(level=sfc)
     )
     logging.info(f"lcl_pressure {lcl_pressure} lcl_temperature {lcl_temperature}")
 
@@ -150,15 +164,22 @@ def skewt(
 
     # Calculate full parcel profile with LCL.
     p_without_lcl = p  # remember so we can interpolate other variables later
-    # Append LCL to pressure array.
-    p = np.append(p.data, lcl_pressure)
-    # Create reverse sorted array of pressure including LCL
-    p[::-1].sort()
+    if min(p) <= lcl_pressure < max(p):
+        # Append LCL to pressure array.
+        p = np.append(p.data, lcl_pressure)
+    else:
+        # Averaging temperature, pressure, and mixing ratio along levels can
+        # make mixing ratio above saturation, making LCL is below profile.
+        # Don't bother adding lcl_pressure point in that case.
+        logging.warning(f"lcl outside range of p {p.min()} {p.max()}")
+        p = p.data  # convert to Quantity array (with units) so we can sort it
+    # Create reverse sorted array of pressure. mpcalc assumes bottom-up arrays.
+    p = np.sort(p)[::-1]
     # Interpolate other variables to p array (which now includes LCL).
-    T, Td, u, v, height, Tv, Zsfc, SP = interpolate_1d(
+    t, Td, u, v, height, Tv, Zsfc, sp = interpolate_1d(
         p,
         p_without_lcl,
-        T,
+        t,
         Td,
         u,
         v,
@@ -170,7 +191,7 @@ def skewt(
 
     # T and Td were already turned from DataArrays into simple Quantity arrays
     # so you can't use .sel method here.
-    prof = mpcalc.parcel_profile(p, T[0], Td[0])
+    prof = mpcalc.parcel_profile(p, t[0], Td[0])
     prof_mixing_ratio = mpcalc.mixing_ratio_from_relative_humidity(
         p, prof, 1
     )  # saturated mixing ratio
@@ -182,7 +203,7 @@ def skewt(
     profTv = mpcalc.virtual_temperature(prof, prof_mixing_ratio)
 
     # Plot temperature and dewpoint.
-    skew.plot(p, T, "r")
+    skew.plot(p, t, "r")
     skew.plot(p, Td, "g")
     # Draw virtual temperature like temperature, but thin and dashed.
     skew.plot(p, Tv, "r", lw=0.5, linestyle="dashed")
@@ -239,7 +260,7 @@ def skewt(
         (agl2p,) = interpolate_1d(label_hgt, agl, p)
         s = f"{label_hgt:~.0f}"
         if label_hgt == 0 * units.km:
-            agl2p = SP[0]
+            agl2p = sp[0]
             s = f"SFC ({Zsfc[0]:~.0f})"
         skew.ax.plot([0, 0.01], 2 * [agl2p.m_as("hPa")], transform=trans, color="brown")
         skew.ax.text(

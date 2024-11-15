@@ -6,7 +6,6 @@ Otherwise use s3fs Amazon Web Service bucket or local cached file.
 """
 
 import argparse
-import glob
 import logging
 import os
 import pdb
@@ -19,6 +18,7 @@ import numpy as np
 import pandas as pd
 import s3fs
 import xarray
+from matplotlib import pyplot as plt
 from metpy.units import units
 
 
@@ -34,8 +34,14 @@ def parse_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(description="get ERA5 sounding at time, lon, lat")
     parser.add_argument("time", help="time")
-    parser.add_argument("lon", type=float, help="longitude in degrees East (0-360)")
-    parser.add_argument("lat", type=float, help="latitude in degrees North")
+    parser.add_argument(
+        "lon",
+        type=lambda x: float(x) * units.degreeE,
+        help="longitude in degrees East (0-360)",
+    )
+    parser.add_argument(
+        "lat", type=lambda x: float(x) * units.degreeN, help="latitude in degrees North"
+    )
     parser.add_argument(
         "--model_levels", action="store_true", help="native model levels"
     )
@@ -91,8 +97,8 @@ def mean_lat_lon(lats_deg, lons_deg):
     lat_mean = np.degrees(lat_mean)
     lon_mean = np.degrees(lon_mean)
 
-    lat_mean = xarray.DataArray(lat_mean, attrs=lats_deg.attrs)
-    lon_mean = xarray.DataArray(lon_mean, attrs=lons_deg.attrs)
+    lat_mean = xarray.DataArray(lat_mean, attrs=lats_deg.attrs).metpy.quantify()
+    lon_mean = xarray.DataArray(lon_mean, attrs=lons_deg.attrs).metpy.quantify()
 
     return lat_mean, lon_mean
 
@@ -101,27 +107,51 @@ def neighborhood(args, ds):
     """mean in neighborhood of args.neighbor points
     of args.lat, args.lon
     """
+    if args.neighbors > 100:
+        logging.warning(
+            f"averaging {args.neighbors} neighbors along model levels may result in averaging between wildly different pressures and heights"
+        )
     # indexing="ij" allows Dataset.stack dim order to be "latitude", "longitude"
     lat2d, lon2d = np.meshgrid(ds.latitude, ds.longitude, indexing="ij")
     latlon = np.deg2rad(np.vstack([lat2d.ravel(), lon2d.ravel()]).T)
-    X = np.deg2rad([[args.lat, args.lon]])
+    X = [[args.lat.m_as("radian"), args.lon.m_as("radian")]]
 
     (idx,) = BallTree(latlon, metric="haversine").query(
         X, return_distance=False, k=args.neighbors
     )
     ds = ds.stack(z=("latitude", "longitude")).isel(z=idx)
-    print(ds.latitude, ds.longitude)
     lat_mean, lon_mean = mean_lat_lon(ds.latitude, ds.longitude)
-    print(lat_mean, lon_mean)
-    # TODO: remove assertions after function is bug-free
-    # assert mean location is close to what was requested.
-    assert abs(lat_mean - args.lat) < 1, f"meanlat {lat_mean} args.lat {args.lat}"
-    assert (
-        np.cos(np.radians(lon_mean)) - np.cos(np.radians(args.lon))
-    ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.cos(np.radians(lon_mean)) - np.cos(np.radians(args.lon))}"
-    assert (
-        np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))
-    ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))}"
+
+    if logging.getLogger(__name__).getEffectiveLevel() <= logging.DEBUG:
+        import cartopy.crs as ccrs
+        import cartopy.feature as cfeature
+
+        fig, ax = plt.subplots(
+            figsize=(10, 5),
+            subplot_kw={"projection": ccrs.PlateCarree(central_longitude=lon_mean.data)},
+        )
+
+        # Add features to the map
+        ax.add_feature(cfeature.COASTLINE)
+        ax.add_feature(cfeature.BORDERS, linestyle=":")
+        ax.add_feature(cfeature.LAND, edgecolor="black")
+        ax.add_feature(cfeature.OCEAN)
+
+        # Plot the points
+        ax.plot(lon_mean, lat_mean, marker="o", color="red", transform=ccrs.PlateCarree())
+        ax.scatter(ds.longitude, ds.latitude, marker=".", transform=ccrs.PlateCarree())
+        ax.set_title(f"{lat_mean.data} {lon_mean.data}")
+        ax.gridlines(draw_labels=True)
+        plt.show()
+        # TODO: remove assertions after function is bug-free
+        # assert mean location is close to what was requested.
+        assert abs(lat_mean - args.lat) < 1, f"meanlat {lat_mean} args.lat {args.lat}"
+        assert (
+            np.cos(np.radians(lon_mean)) - np.cos(np.radians(args.lon))
+        ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.cos(np.radians(lon_mean)) - np.cos(np.radians(args.lon))}"
+        assert (
+            np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))
+        ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))}"
     ds = ds.mean(dim="z")  # lose `z` `latitude` `longitude`
     ds = ds.assign_coords(latitude=lat_mean, longitude=lon_mean)
     ds.attrs["neighbors"] = args.neighbors
