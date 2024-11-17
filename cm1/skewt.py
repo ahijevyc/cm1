@@ -8,7 +8,6 @@ data, as well as dry adiabats, moist adiabats, and mixing lines on the Skew-T di
 
 import logging
 import os
-import pdb
 import pickle
 from typing import Optional, Tuple
 
@@ -18,7 +17,6 @@ import metpy.calc as mpcalc
 import numpy as np
 import pandas as pd
 import xarray
-from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from metpy.interpolate import interpolate_1d
 from metpy.plots import Hodograph, SkewT
@@ -26,7 +24,8 @@ from metpy.units import units
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from pint import Quantity
 
-from cm1.io import load_era5, neighborhood, parse_args
+from cm1.io import get_ofile, load_era5
+from cm1.utils import neighborhood, parse_args
 
 
 def main() -> None:
@@ -39,7 +38,7 @@ def main() -> None:
 
     args = parse_args()
 
-    ofile = "t.nc"
+    ofile = get_ofile(args)
     if os.path.exists(ofile):
         logging.warning(f"read {ofile}")
         with open(ofile, "rb") as file:

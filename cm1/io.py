@@ -5,10 +5,8 @@ Load ERA5 model dataset for a user-specified time and location.
 Otherwise use s3fs Amazon Web Service bucket or local cached file.
 """
 
-import argparse
 import logging
 import os
-import pdb
 from pathlib import Path
 from typing import Tuple
 
@@ -18,144 +16,19 @@ import numpy as np
 import pandas as pd
 import s3fs
 import xarray
-from matplotlib import pyplot as plt
 from metpy.units import units
 
+from cm1.utils import neighborhood, parse_args
 
-def parse_args() -> argparse.Namespace:
-    """
-    Parse command-line arguments for ERA5 data retrieval.
+TMPDIR = Path(os.getenv("TMPDIR"))
 
-    Returns
-    -------
-    argparse.Namespace
-        Parsed command-line arguments including time, longitude, latitude,
-        and options for model levels and campaign storage.
-    """
-    parser = argparse.ArgumentParser(description="get ERA5 sounding at time, lon, lat")
-    parser.add_argument("time", help="time")
-    parser.add_argument(
-        "lon",
-        type=lambda x: float(x) * units.degreeE,
-        help="longitude in degrees East (0-360)",
+
+def get_ofile(args):
+    ofile = (
+        TMPDIR
+        / f"{pd.to_datetime(args.time).strftime('%Y%m%d_%H%M%S')}.{args.lat:~}.{args.lon:~}.nc"
     )
-    parser.add_argument(
-        "lat", type=lambda x: float(x) * units.degreeN, help="latitude in degrees North"
-    )
-    parser.add_argument(
-        "--model_levels", action="store_true", help="native model levels"
-    )
-    parser.add_argument("--campaign", action="store_true", help="use campaign storage")
-    parser.add_argument("--glade", default="/", help="parent of glade directory")
-    parser.add_argument(
-        "--neighbors",
-        type=int,
-        default=1,
-        help="number of neighbors to average",
-    )
-    args = parser.parse_args()
-    logging.info(args)
-    return args
-
-
-import numpy as np
-from sklearn.neighbors import BallTree as BallTree
-
-
-def mean_lat_lon(lats_deg, lons_deg):
-    """
-    Calculates the mean latitude and longitude of a set of points on a sphere.
-
-    Args:
-        lats (list): List of latitudes in degrees.
-        lons (list): List of longitudes in degrees.
-
-    Returns:
-        tuple: Mean latitude and longitude in degrees.
-    """
-
-    # Convert to radians
-    lats = np.radians(lats_deg)
-    lons = np.radians(lons_deg)
-
-    # Calculate Cartesian coordinates
-    x = np.cos(lats) * np.cos(lons)
-    y = np.cos(lats) * np.sin(lons)
-    z = np.sin(lats)
-
-    # Calculate mean Cartesian coordinates
-    x_mean = np.mean(x)
-    y_mean = np.mean(y)
-    z_mean = np.mean(z)
-
-    # Convert back to spherical coordinates
-    lon_mean = np.arctan2(y_mean, x_mean)
-    hyp = np.sqrt(x_mean**2 + y_mean**2)
-    lat_mean = np.arctan2(z_mean, hyp)
-
-    # Convert back to degrees
-    lat_mean = np.degrees(lat_mean)
-    lon_mean = np.degrees(lon_mean)
-
-    lat_mean = xarray.DataArray(lat_mean, attrs=lats_deg.attrs).metpy.quantify()
-    lon_mean = xarray.DataArray(lon_mean, attrs=lons_deg.attrs).metpy.quantify()
-
-    return lat_mean, lon_mean
-
-
-def neighborhood(args, ds):
-    """mean in neighborhood of args.neighbor points
-    of args.lat, args.lon
-    """
-    if args.neighbors > 100:
-        logging.warning(
-            f"averaging {args.neighbors} neighbors along model levels may result in averaging between wildly different pressures and heights"
-        )
-    # indexing="ij" allows Dataset.stack dim order to be "latitude", "longitude"
-    lat2d, lon2d = np.meshgrid(ds.latitude, ds.longitude, indexing="ij")
-    latlon = np.deg2rad(np.vstack([lat2d.ravel(), lon2d.ravel()]).T)
-    X = [[args.lat.m_as("radian"), args.lon.m_as("radian")]]
-
-    (idx,) = BallTree(latlon, metric="haversine").query(
-        X, return_distance=False, k=args.neighbors
-    )
-    ds = ds.stack(z=("latitude", "longitude")).isel(z=idx)
-    lat_mean, lon_mean = mean_lat_lon(ds.latitude, ds.longitude)
-
-    if logging.getLogger(__name__).getEffectiveLevel() <= logging.DEBUG:
-        import cartopy.crs as ccrs
-        import cartopy.feature as cfeature
-
-        fig, ax = plt.subplots(
-            figsize=(10, 5),
-            subplot_kw={"projection": ccrs.PlateCarree(central_longitude=lon_mean.data)},
-        )
-
-        # Add features to the map
-        ax.add_feature(cfeature.COASTLINE)
-        ax.add_feature(cfeature.BORDERS, linestyle=":")
-        ax.add_feature(cfeature.LAND, edgecolor="black")
-        ax.add_feature(cfeature.OCEAN)
-
-        # Plot the points
-        ax.plot(lon_mean, lat_mean, marker="o", color="red", transform=ccrs.PlateCarree())
-        ax.scatter(ds.longitude, ds.latitude, marker=".", transform=ccrs.PlateCarree())
-        ax.set_title(f"{lat_mean.data} {lon_mean.data}")
-        ax.gridlines(draw_labels=True)
-        plt.show()
-        # TODO: remove assertions after function is bug-free
-        # assert mean location is close to what was requested.
-        assert abs(lat_mean - args.lat) < 1, f"meanlat {lat_mean} args.lat {args.lat}"
-        assert (
-            np.cos(np.radians(lon_mean)) - np.cos(np.radians(args.lon))
-        ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.cos(np.radians(lon_mean)) - np.cos(np.radians(args.lon))}"
-        assert (
-            np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))
-        ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))}"
-    ds = ds.mean(dim="z")  # lose `z` `latitude` `longitude`
-    ds = ds.assign_coords(latitude=lat_mean, longitude=lon_mean)
-    ds.attrs["neighbors"] = args.neighbors
-    return ds
+    return ofile
 
 
 def main() -> None:
@@ -170,7 +43,7 @@ def main() -> None:
 
     args = parse_args()
 
-    ofile = "t.nc"
+    ofile = get_ofile(args)
     if os.path.exists(ofile):
         logging.warning(f"read {ofile}")
         with open(ofile, "rb") as file:
@@ -182,8 +55,9 @@ def main() -> None:
             model_levels=args.model_levels,
             glade=args.glade,
         )
-    with open(ofile, "wb") as file:
-        pickle.dump(ds, file)
+        with open(ofile, "wb") as file:
+            logging.warning(f"pickle dump {ofile}")
+            pickle.dump(ds, file)
 
     if args.neighbors == 1:
         ds = ds.sel(
@@ -348,8 +222,7 @@ def s3_era5_dataset(time: pd.Timestamp) -> xarray.Dataset:
     S3_PATH_TEMPLATE = S3_BUCKET + f"/e5.oper.an.pl/{time.year}{time.month:02d}"
 
     # Define the cache directory
-    tmpdir = Path(os.getenv("TMPDIR"))
-    CACHE_DIR = tmpdir / "era5_cache"
+    CACHE_DIR = TMPDIR / "era5_cache"
     # Ensure cache directory exists
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
@@ -509,7 +382,7 @@ def to_sounding_txt(ds: xarray.Dataset) -> str:
     ds["Q"] = ds["Q"].metpy.convert_units("g/kg")
     sfc_qv_gkg = ds.Q.sel(level=bottom)
 
-    s = f"{sfc_pres.values} {sfc_theta_K.values} {sfc_qv_gkg.values}\n"
+    s = f"{sfc_pres.compute().item().m_as('hPa')} {sfc_theta_K.values} {sfc_qv_gkg.values}\n"
     s += (
         ds.to_dataframe()
         .sort_index(ascending=False)  # from surface upward
