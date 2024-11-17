@@ -17,3 +17,6 @@ run/config_files/cpm_RadConvEquil/RRTMG_SW_DATA
 run/config_files/cpm_RadConvEquil/RRTMG_LW_DATA
 run/p3_lookupTable_2.dat-v5.3
 run/ishmael-gamma-tab.bin
+src/*.f90
+src/*.o
+src/*.mod
