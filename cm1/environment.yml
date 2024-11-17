@@ -17,4 +17,5 @@ dependencies:
   - matplotlib
   - metpy
   - certifi
+  - scikit-learn
 prefix: /glade/work/ahijevyc/conda-envs/cm1
