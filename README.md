@@ -19,23 +19,28 @@ For more information, please read these [answers to frequently asked questions](
 
 ## Documentation
   
-### About CM1:
+<details>
+  <summary>About CM1</summary>
 
 - [Parallel Performance](doc/pp.md)
 - [The governing equations for CM1](doc/cm1_equations.pdf)  **(Last updated:  21 October 2021)**
 - [Acknowledgments](doc/ACKNOWLEDGMENTS).
 - [Answers to frequently asked questions](doc/faq.md) about CM1.
 - [presentation on CM1 parallelization](doc/cm1_parallelization.pdf) (pdf)  (From presentation at NCSA, December 2009)
+</details>
 
-### Helpful Information for New Users of CM1:
+<details>
+  <summary>Helpful Information for New Users of CM1</summary>
 
 - [A brief summary of how to run cm1](doc/README.md)
 - [README.namelist](README.namelist) -- explains the various settings in the namelist.input file.
 - [Pre-configured namelist.input files](namelists)
 - [Soundings for idealized simulations](soundings)
 - [Sample submission scripts for NCAR's supercomputers](scripts)
+</details>
 
-### Other Information about CM1:
+<details>
+  <summary>Other Information about CM1</summary>
 
 - [CHANGES in release 21.1](doc/CHANGES) -- new features, modifications, and code fixes for the newest version (24 March 2024)
   - [History of all CHANGES](doc/changes.md) (from `r2` to present)
@@ -43,8 +48,10 @@ For more information, please read these [answers to frequently asked questions](
 - [Instructions for adding a new microphysics scheme to CM1](doc/new_microphysics.pdf) (pdf)
 - [Some useful GrADS scripts](scripts/grads)
 - [Some useful programs for MPI users](programs)
+</details>
 
-## Testing and evaluation of CM1
+<details>
+  <summary>Testing and evaluation of CM1</summary>
 
 Here are reports on some basic tests of the accuracy and capability of CM1.  (Note:  all of these tests have been completed, but I haven't had time to write up the results.  I plan to have all of these posted online in the near future.)
 
@@ -55,8 +62,10 @@ Here are reports on some basic tests of the accuracy and capability of CM1.  (No
 - Bryan-Fritsch moist benchmark
 - Large eddy simulation of the convective boundary layer
 - A comparison of axisymmetric and three-dimensional simulations of a tropical cyclone
+</details>
 
-## Research Results
+<details>
+  <summary>Research Results</summary>
 
 **Peer-reviewed articles** that use CM1: (Please contact George Bryan if you have something to add to this list.) 
 _Last updated:  March 2024_
@@ -65,8 +74,6 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
 
 ![cm1pubs-211217.png](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1pubs-211217.png)
 
-<HTML>
-<BODY>
 <ul>
   <li>2024:</li>
   <ul>
@@ -1060,21 +1067,20 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <li>Bryan, G. H., and J. M. Fritsch, 2002:  <a href="http://dx.doi.org/10.1175/1520-0493(2002)130<2917:ABSFMN>2.0.CO;2">A benchmark simulation for moist nonhydrostatic numerical models</a>.  <i>Mon. Wea. Rev.,</i> <b>130,</b> 2917-2928. 
   </ul>
 </ul>
-<p>
-<hr>
-<p>
-<u>Some recent conference papers</u> that use CM1:
+</details>
+
+<details>
+<summary>Some recent conference papers that use CM1</summary>
 <ul>
   <li>S. D. Ditchek, J. Molinari, R. G. Fovell, and K. L. Corbosiero, 2018:  <a href="https://ams.confex.com/ams/33HURRICANE/webprogram/Manuscript/Paper339141/HTMC33_Ditchek_ExtendedAbstract.pdf">The tropical cyclone diurnal cycle in CM1 using an ensemble approach</a>.  <i>33rd Conference on Hurricanes and Tropical Meteorology,</i> Ponte Vedra, FL, Amer. Meteor. Soc., 8C.8.</li>
   <li>Alland, J. J., B. H. Tang, and K. L. Corbosiero, 2018:  <a href="https://ams.confex.com/ams/33HURRICANE/webprogram/Manuscript/Paper339577/Alland_Tropical_2017_Extended_Abstract_FINAL.pdf">The Synergistic Effect of Midlevel Dry Air and Vertical Wind Shear on the Development of the Tropical Cyclone Secondary Circulation</a>. <i>33rd Conference on Hurricanes and Tropical Meteorology,</i> Ponte Vedra, FL, Amer. Meteor. Soc., 8C.1.</li>
   <li>Duran, P., and J. Molinari, 2018:  <a href="https://ams.confex.com/ams/33HURRICANE/webprogram/Manuscript/Paper339247/2018_Duran%26Molinari_AMStropical_extended_abstract.pdf">Upper-Tropospheric Static Stability in Tropical Cyclones: Observations and Modeling</a>. <i>33rd Conference on Hurricanes and Tropical Meteorology,</i> Ponte Vedra, FL, Amer. Meteor. Soc., 13B.1.</li>
   <li>Naylor, J., 2016:  <a href="https://ams.confex.com/ams/28SLS/webprogram/Manuscript/Paper301741/naylor16sls.pdf">Exploring the impact of storm relative helicity on the relationship between cold pools and tornadoes</a>.  <i>28th Conference on Severe Local Storms,</i> Portland, OR, Amer. Meteor. Soc., 6A.1. 
 </ul>
-<p>
-<hr>
-<p>
-<b>Honors and awards</b>
-<p>
+</details>
+
+<details>
+<summary>Honors and awards</summary>
 <ul>
   <li><b>2018</b>:  <u>Patrick Duran</u> of University at Albany, SUNY, won the Max Eaton Award at the 2018 Conference on Hurricanes and Tropical Meteorology for his study <a href="https://ams.confex.com/ams/33HURRICANE/webprogram/Paper339247.html">Upper-Tropospheric Static Stability in Tropical Cyclones: Observations and Modeling</a> 
   <li><b>2018</b>:  <u>Erik Nielsen</u> of Colorado State University won a Student Poster Presentation award at the 2018 Conference on Weather Analysis and Forecasting for his study <a href="https://ams.confex.com/ams/29WAF25NWP/webprogram/Paper345419.html">Dynamical Insights into Extreme Short-Term Precipitation Associated with Supercells and Mesovortices</a>.
@@ -1088,34 +1094,27 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
   <li><b>2008</b>:  <u>Chris Nowotarski</u> of the Department of Meteorology at The Pennsylvania State University won the Best Student Oral Presentation award at the 24th Conference on Severe Local Storms for his study of numerically simulated supercells  in varying low-level environmental stability.</li>
 </ul>
 (Please contact George Bryan if you have something to add to this list.)
-<p>
-<hr>
-<p>
-<b>Links</b>
-<p>
+</details>
+
+<details>
+<summary>Links</summary>
 <ul>
   <li><a href="http://cola.gmu.edu/grads/">Grid Analysis and Display System (GrADS)</a> 
   <li><a href="http://www.unidata.ucar.edu/software/netcdf/">NetCDF</a> 
   <li><a href="http://www.vapor.ucar.edu/">Visualization and Analysis Platform for Ocean, Atmosphere, and Solar Researchers (VAPOR)</a>  
 </ul>
-<p>
-<hr>
-<p>
-Send comments and/or questions about this page to:<br>
-<p>
-George H. Bryan<br>
-NSF National Center for Atmospheric Research<br>
-3090 Center Green Drive<br>
-Boulder, CO 80301, USA<br>
+</details>
+
+Send comments and/or questions about this page to:
+
+```
+George H. Bryan
+NSF National Center for Atmospheric Research
+3090 Center Green Drive
+Boulder, CO 80301, USA
+```
 email: gbryan at ucar dot edu
-<p>
-<i>Last updated:  24 March 2024</i>
-<p>
 <hr>
-<p>
 <font color="gray">
 The National Center for Atmospheric Research is sponsored by the U.S. National Science Foundation. Any opinions, findings and conclusions or recommendations expressed in this publication are those of the author(s) and do not necessarily reflect the views of the U.S. National Science Foundation.
 </font>
-<p>
-</BODY>
-</HTML>
