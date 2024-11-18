@@ -1,5 +1,6 @@
 import argparse
 import logging
+import pdb
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -18,14 +19,16 @@ def parse_args() -> argparse.Namespace:
         and options for model levels and campaign storage.
     """
     parser = argparse.ArgumentParser(description="get ERA5 sounding at time, lon, lat")
-    parser.add_argument("time", help="time")
+    parser.add_argument("--time", help="time")
     parser.add_argument(
-        "lon",
+        "--lon",
         type=lambda x: float(x) * units.degreeE,
-        help="longitude in degrees East (0-360)",
+        help="longitude in degrees East",
     )
     parser.add_argument(
-        "lat", type=lambda x: float(x) * units.degreeN, help="latitude in degrees North"
+        "--lat",
+        type=lambda x: float(x) * units.degreeN,
+        help="latitude in degrees North",
     )
     parser.add_argument(
         "--model_levels", action="store_true", help="native model levels"
@@ -39,6 +42,8 @@ def parse_args() -> argparse.Namespace:
         help="number of neighbors to average",
     )
     args = parser.parse_args()
+    # Map to 0-360 degreesE
+    setattr(args, "lon", args.lon % (360 * units.degreesE))
     logging.info(args)
     return args
 
