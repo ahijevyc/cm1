@@ -52,4 +52,4 @@ python skewt.py --time 20240518T18 \
 
 Expected output
 
-<img src="cm1/images/skewt.png">
+<img src="images/skewt.png">
