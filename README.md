@@ -75,7 +75,8 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
 ![cm1pubs-211217.png](https://www2.mmm.ucar.edu/people/bryan/cm1/cm1pubs-211217.png)
 
 <ul>
-  <li>2024:</li>
+  <details>
+    <summary>2024</summary>
   <ul>
     <!--451-->
     <li>Bhattacharya, A, 2024: <a href="https://doi.org/10.1007/s10652-024-09972-2">Evaluation of energy consistent entrainment rate closure for cloudy updrafts</a>. <i>Environ. Fluid Mech.,</i> doi:10.1007/s10652-024-09972-2.
@@ -98,7 +99,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--442-->
     <li>Dong, Y., S. Hua, B. Chen, H. Wang, and T. Hou, 2024: <a href="https://doi.org/10.1016/j.atmosres.2023.107218">Numerical simulation of a pulse hailstorm in the plateau region in southwestern China</a>. <i>Atmospheric Research</i> <b>299</b>, doi:10.1016/j.atmosres.2023.107218.
   </ul>
-  <li>2023:</li>
+  </details>
+
+  <details>
+  <summary>2023</summary>
   <ul>
     <!--441-->
     <li>Jeong, J.-H., Witte, M. K., and Smalley, M., 2023: <a href="https://doi.org/10.1029/2023JD039081">Effects of wind shear and aerosol conditions on the organization of precipitating marine stratocumulus clouds</a>. <i>Journal of Geophysical Research: Atmospheres,</i> <b>128,</b> e2023JD039081.
@@ -195,7 +199,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--395-->
     <li>Finley, C. A., Elmore, M., Orf, L., and Lee, B. D., 2023: <a href="https://doi.org/10.1029/2022GL100005">Impact of the streamwise vorticity current on low-level mesocyclone development in a simulated supercell</a>. <i>Geophysical Research Letters,</i> <b>50,</b> e2022GL100005, doi:10.1029/2022GL100005. 
   </ul>
-  <li>2022:</li>
+  </details>
+
+  <details>
+    <summary>2022</summary>
   <ul>
     <!--394-->
     <li>Boyer, C. H., and Keeler, J. M., 2022: <a href="https://doi.org/10.1175/JAMC-D-22-0017.1">Evaluation and Improvement of an Inflow-Nudging Technique for Idealized Simulations of Convective Boundary Layers</a>. <i>Journal of Applied Meteorology and Climatology,</i> <b>61,</b> 1843-1860, doi:10.1175/JAMC-D-22-0017.1. 
@@ -294,7 +301,9 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--347-->
     <li>Lin, Y., and Kumjian, M. R., 2022: <a href="https://doi.org/10.1175/JAS-D-21-0054.1">Influences of CAPE on Hail Production in Simulated Supercell Storms</a>. <i>Journal of the Atmospheric Sciences</i>, doi:10.1175/JAS-D-21-0054.1.
   </ul>
-  <li>2021:</li>
+  </details>
+
+  <details><summary>2021</summary>
   <ul>
     <!--346-->
     <li>Wang, Y., Li, Y., and Xu, J., 2021: <a href="https://doi.org/10.1175/JAS-D-21-0169.1">A New Time-Dependent Theory of Tropical Cyclone Intensification</a>. <i>Journal of the Atmospheric Sciences,</i> doi:10.1175/JAS-D-21-0169.1. 
@@ -423,7 +432,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
-  <li>2020:</li>
+  </details>
+
+  <details>
+  <summary>2020</summary>
   <ul>
     <!--284-->
     <li>Drueke, S., D. J. Kirshbaum, and P. Kollias, 2020: <a href="https://doi.org/10.5194/acp-20-13217-2020">Environmental sensitivities of shallow-cumulus dilution – Part 1: Selected thermodynamic conditions</a>.  <i>Atmospheric Chemistry and Physics,</i> <b>20,</b> 13217–13239, doi:10.5194/acp-20-13217-2020. 
@@ -527,7 +539,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
-  <li>2019:</li>
+  </details>
+
+  <details>
+  <summary>2019</summary>
   <ul>
     <!--238-->
     <li>Tang, X., Cai, Q., Fang, J., and Tan, Z.‐M.,  2019:  <a href="https://dx.doi.org/10.1029/2019JD031454">Land–Sea Contrast in the Diurnal Variation of Precipitation from Landfalling Tropical Cyclones</a>.  <i>Journal of Geophysical Research: Atmospheres,</i> doi:10.1029/2019JD031454. 
@@ -601,7 +616,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
-  <li>2018:</li>
+  </details>
+
+  <details>
+  <summary>2018</summary>
   <ul>
     <!--201-->
     <li>Schecter, D. A., 2018:  <a href="https://dx.doi.org/10.1080/16000870.2018.1525245">On the instabilities of tropical cyclones generated by cloud resolving models</a>. <i>Tellus A: Dynamic Meteorology and Oceanography,</i> <b>70,</b> 1-30, doi:10.1080/16000870.2018.1525245.
@@ -675,7 +693,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
-  <li>2017:</li>
+  </details>
+  
+  <details>
+  <summary>2017</summary>
   <ul>
     <!--168-->
     <li>Coffer, B. E., M. D. Parker, J. M. L. Dahl, L. J. Wicker, and A. J. Clark, 2017:  <a href="http://dx.doi.org/10.1175/MWR-D-17-0152.1">Volatility of tornadogenesis:  An ensemble of simulated nontornadic and tornadic supercells in VORTEX2 environments</a>.  <i>Mon. Wea. Rev.,</i> <b>145,</b> 4605-4625, doi:10.1175/MWR-D-17-0152.1.
@@ -751,7 +772,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
-  <li>2016:</li>
+  </details>
+
+  <details>
+  <summary>2016</summary>
   <ul>
     <!--136-->
     <li>Singh, M. S., and P. A. O'Gorman, 2016:  <a href="http://dx.doi.org/10.1002/2016MS000673">Scaling of the entropy budget with surface temperature in radiative-convective equilibrium</a>.  <i>J. Adv. Model. Earth Syst.,</i> <b>8,</b> 1132-1150, doi:10.1002/2016MS000673. 
@@ -804,7 +828,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
-  <li>2015:</li>
+  </details>
+
+  <details>
+  <summary>2015</summary>
   <ul>
     <!--110-->
     <li>Schecter, D. A., 2015:  <a href="http://journals.ametsoc.org/doi/abs/10.1175/JAS-D-15-0028.1">Development and Nondevelopment of Binary Mesoscale Vortices into Tropical Cyclones in Idealized Numerical Experiments.</a>  <i>J. Atmos. Sci.</i>, <b>73,</b> 1223–1254, doi: 10.1175/JAS-D-15-0028.1.
@@ -846,7 +873,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
   <!--ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc-->
-  <li>2014:</li>
+  </details>
+
+  <details>
+  <summary>2014</summary>
   <ul>
     <!--92-->
     <li>Lane, T. P., and R. D. Sharman, 2014:  <a href="http://dx.doi.org/10.1002/2014GL059299">Intensity of thunderstorm-generated turbulence revealed by large-eddy simulation</a>.  <i>Geophys. Res. Letters,</i> <b>41,</b> 2221-2227, doi:10.1002/2014GL059299.
@@ -891,7 +921,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--70-->
     <li>Bu, Y. P., R. G. Fovell, and K. L. Corbosiero, 2014:  <a href="http://journals.ametsoc.org/doi/abs/10.1175/JAS-D-13-0265.1">Influence of cloud-radiative forcing on tropical cyclone structure</a>.  <i>J. Atmos. Sci.,</i> <b>71,</b> 1644-1662, doi:10.1175/JAS-D-13-0265.1.
   </ul>
-  <li>2013:</li>
+  </details>
+
+  <details>
+  <summary>2013</summary>
   <ul>
     <!--71-->
     <li>Persing, J., M. T. Montgomery, J. C. McWilliams, and R. K. Smith, 2013:  <a href="http://www.atmos-chem-phys.net/13/12299/2013/acp-13-12299-2013.html">Asymmetric and axisymmetric dynamics of tropical cyclones</a>.  <i>Atmos. Chem. Phys.,</i> <b>13,</b> 12299-12341.
@@ -918,7 +951,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--59-->
     <li>Bryan, G. H., 2013:  <a href="http://onlinelibrary.wiley.com/doi/10.1002/qj.2066/abstract">Comments on "Sensitivity of tropical-cyclone models to the surface drag coefficient"</a>.  <i>Quart. J. Roy. Meteor. Soc.,</i> <b>139,</b> 1957-1960, doi:10.1002/qj.2066. 
   </ul>
-  <li>2012:</li>
+  </details>
+
+  <details>
+  <summary>2012</summary>
   <ul>
     <!--58-->
     <li>Naylor, J., and M. S. Gilmore, 2012:  <a href="http://www.agu.org/pubs/crossref/2012/2012GL053041.shtml">Environmental factors influential to the duration and intensity of tornadoes in simulated supercells</a>.  <i>Geophys. Res. Let.,</i> <b>39,</b> L17802, doi:10.1029/2012GL053041
@@ -949,7 +985,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--45-->
     <li>Bryan, G. H., and H. Morrison, 2012:  <a href="http://journals.ametsoc.org/doi/abs/10.1175/MWR-D-11-00046.1">Sensitivity of a simulated squall line to horizontal resolution and parameterization of microphysics</a>.  <i>Mon. Wea. Rev.,</i> <b>140,</b> 202-225, doi:10.1175/MWR-D-11-00046.1
   </ul>
-  <li>2011:</li>
+  </details>
+  
+  <details>
+  <summary>2011</summary>
   <ul>
     <!--342-->
     <li>Rotunno, R., Klemp, J., Bryan, G., and Muraki, D., 2011: <a href="https://doi.org/10.1017/jfm.2010.648">Models of non-Boussinesq lock-exchange flow</a>. <i>Journal of Fluid Mechanics,</i> </b>675,</b> 1-26, doi:10.1017/jfm.2010.648. 
@@ -974,7 +1013,10 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--35-->
     <li>Kirshbaum, D. J., 2011:  <a href="http://journals.ametsoc.org/doi/abs/10.1175/2010JAS3642.1">Cloud-resolving simulations of deep convection over a heated mountain</a>.  <i>J. Atmos. Sci.,</i> <b>68,</b> 361-378. 
   </ul>
-  <li>2010:</li>
+  </details>
+
+  <details>
+  <summary>2010</summary>
   <ul>
     <!--34-->
     <li>Wissmeier, U., R. K. Smith, and R. Goler, 2010:  <a href="http://onlinelibrary.wiley.com/doi/10.1002/qj.691/abstract">The formation of a multicell thunderstorm behind a sea-breeze front</a>.  <i>Quart. J. Roy. Meteor. Soc.,</i> <b>136,</b> 2176-2188. 
@@ -991,7 +1033,11 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--28-->
     <li>Wang, W., 2010: <a href="http://www.springerlink.com/content/1k81k3phh2j2772x/?p=c15c4c8a54eb49afb86a707bd087b056&pi=10">The influence of topography on single-tower-based carbon flux measurements under unstable conditions: a modeling perspective</a>.  <i>Theor. Appl. Climatol.,</i> <b>99,</b> 125-138.</li>
   </ul>
-  <li>2009:</li>
+  </details>
+
+  <details>
+  <summary>pre-2010</summary>
+    <li>2009</li>
   <ul>
     <!--27-->
     <li>Bryan, G. H., and R. Rotunno, 2009:  <a href="http://ams.allenpress.com/perlserv/?request=get-abstract&doi=10.1175%2F2009JAS3038.1">Evaluation of an analytical model for the maximum intensity of tropical cyclones</a>.  <i>J. Atmos. Sci.,</i> <b>66,</b> 3042-3060.</li>
@@ -1010,7 +1056,8 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--20-->
     <li>Wang, W., 2009:  <a href="http://www.springerlink.com/content/k75jk2128t68585g/?p=185502518ce24e76b1a5acc81f318f55&pi=4">The influence of thermally-induced mesoscale circulations on turbulence statistics over an idealized urban area under a zero background wind.</a>  <i>Bound.-Layer Meteor.,</i> <b>131,</b> 403-423.
   </ul>
-  <li>2008:</li>
+    
+  <li>2008</li>
   <ul>
     <!--19-->
     <li>Smith, J. W., and P. R. Bannon, 2008:<a href="http://ams.allenpress.com/perlserv/?request=get-abstract&doi=10.1175%2F2008MWR2343.1">A comparison of compressible and anelastic models of deep dry convection</a>.  <i>Mon. Wea. Rev.,</i> <b>136,</b> 4555-4571.</li>
@@ -1027,7 +1074,8 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--13-->
     <li>Bryan, G. H., and R. Rotunno, 2008:  <a href="http://ams.allenpress.com/perlserv/?request=get-abstract&doi=10.1175%2F2007JAS2443.1">Gravity currents in a deep anelastic atmosphere</a>.  <i>J. Atmos. Sci.,</i> <b>65,</b> 536-556.</li>
   </ul>
-  <li>2007:</li>
+
+  <li>2007</li>
   <ul>
     <!--12-->
     <li>Kirshbaum, D. J., R. Rotunno, and G. H. Bryan, 2007:  <a href="http://ams.allenpress.com/perlserv/?request=get-abstract&doi=10.1175%2F2007JAS2335.1">The spacing of orographic rainbands triggered by small-scale topography</a>.  <i>J. Atmos. Sci.,</i> <b>64,</b> 4222-4245.</li>
@@ -1038,7 +1086,7 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--9-->
     <li>Bryan, G. H., R. Rotunno, and J. M. Fritsch, 2007:  <a href="http://ams.allenpress.com/perlserv/?request=get-abstract&doi=1.1175%2FJAS3899.1">Roll circulations in the convective region of a simulated squall line</a>. <i>J. Atmos. Sci.,</i> <b>64,</b> 1249-1266.</li>
   </ul>
-  <li>2006:</li>
+  <li>2006</li>
   <ul>
     <!--8-->
     <li>Bannon, P. R., J. M. Chagnon, and R. P. James, 2006:  <a href="http://ams.allenpress.com/perlserv/?request=get-abstract&doi=10.1175%2FMWR3228.1">Mass conservation and the anelastic approximation</a>.  <i>Mon. Wea. Rev.,</i> <b>134,</b> 2989-3005.
@@ -1047,7 +1095,7 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--6-->
     <li>James, R. P., P. M. Markowski, and J. M. Fritsch, 2006:  <a href="http://ams.allenpress.com/amsonline/?request=get-abstract&doi=10.1175%2FMWR3109.1">Bow echo sensitivity to ambient moisture and cold pool strength</a>. <i>Mon. Wea. Rev.,</i> <b>134,</b> 950-964.
   </ul>
-  <li>2005:</li>
+  <li>2005</li>
   <ul>
     <!--5-->
     <li>Fanelli, P. F., and P. R. Bannon, 2005:  <a href="http://dx.doi.org/10.1175/JAS3517.1">Nonlinear atmospheric adjustment to thermal forcing</a>.  <i>J. Atmos. Sci.</i>, <b>62,</b> 4253-4272.
@@ -1056,17 +1104,18 @@ Check out this <a href="doc/cm1journals.md">list of journals that have published
     <!--3-->
     <li>Bryan, G. H., 2005:  <a href="http://dx.doi.org/10.1175/MWR2952.1">Spurious convective organization in simulated squall lines owing to moist absolutely unstable layers</a>.  <i>Mon. Wea. Rev.</i>, <b>133,</b> 1978-1997.
   </ul>
-  <li>2003:</li>
+  <li>2003</li>
   <ul>
     <!--2-->
     <li>Bryan, G. H., J. C. Wyngaard, and J. M. Fritsch, 2003:  <a href="http://dx.doi.org/10.1175/1520-0493(2003)131<2394:RRFTSO>2.0.CO;2">Resolution requirements for the simulation of deep moist convection</a>.  <i>Mon. Wea. Rev.</i>, <b>131,</b> 2394-2416. 
   </ul>
-  <li>2002:</li>
+  <li>2002</li>
   <ul>
     <!--1-->
     <li>Bryan, G. H., and J. M. Fritsch, 2002:  <a href="http://dx.doi.org/10.1175/1520-0493(2002)130<2917:ABSFMN>2.0.CO;2">A benchmark simulation for moist nonhydrostatic numerical models</a>.  <i>Mon. Wea. Rev.,</i> <b>130,</b> 2917-2928. 
   </ul>
 </ul>
+  </details>
 </details>
 
 <details>
