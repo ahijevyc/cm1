@@ -34,7 +34,7 @@ For more information, please read these [answers to frequently asked questions](
 
 - [A brief summary of how to run cm1](doc/README.md)
 - [README.namelist](README.namelist) -- explains the various settings in the namelist.input file.
-- [Pre-configured namelist.input files](namelists)
+- [Pre-configured namelist.input files](run/config_files)
 - [Soundings for idealized simulations](soundings)
 - [Sample submission scripts for NCAR's supercomputers](scripts)
 </details>

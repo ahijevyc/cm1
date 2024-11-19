@@ -22,7 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--time", help="time")
     parser.add_argument(
         "--lon",
-        type=lambda x: float(x) * units.degreeE,
+        type=lambda x: float(x) % 360 * units.degreeE,
         help="longitude in degrees East",
     )
     parser.add_argument(
@@ -42,8 +42,6 @@ def parse_args() -> argparse.Namespace:
         help="number of neighbors to average",
     )
     args = parser.parse_args()
-    # Map to 0-360 degreesE
-    setattr(args, "lon", args.lon % (360 * units.degreesE))
     logging.info(args)
     return args
 
