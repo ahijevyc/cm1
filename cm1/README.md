@@ -1,6 +1,7 @@
 Requirements
 * access to [NCAR HPC Campaign Storage](https://ncar-hpc-docs.readthedocs.io/en/latest/storage-systems/glade/campaign/) `/glade/campaign/`
 * Install Python modules in `environment.yml`
+* Install cm1 for io and skewt
 
 Average 4 nearest neighbors to create an ERA5 sounding for CM1.
 ```csh
