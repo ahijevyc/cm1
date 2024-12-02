@@ -18,7 +18,7 @@ import s3fs
 import xarray
 from metpy.units import units
 
-from cm1.utils import neighborhood, parse_args
+from cm1.utils import circle_neighborhood, parse_args
 
 TMPDIR = Path(os.getenv("TMPDIR"))
 
@@ -66,7 +66,7 @@ def main() -> None:
             method="nearest",
         )
     else:
-        ds = neighborhood(args, ds)
+        ds = circle_neighborhood(args, ds)
 
     print(to_sounding_txt(ds))
 
@@ -183,13 +183,13 @@ def load_era5(
                 Z.append(z_f)
                 Z_h.append(z_h)
 
-            ds["Z_h"] = xarray.concat(Z_h, dim="half_level") / metpy.constants.g
-            ds["Z_h"].attrs["long_name"] = "geopotential height"
+            ds["Z_half"] = xarray.concat(Z_h, dim="half_level") / metpy.constants.g
+            ds["Z_half"].attrs["long_name"] = "geopotential height"
             ds["Z"] = xarray.concat(Z, dim="level") / metpy.constants.g
             ds["Z"].attrs["long_name"] = "geopotential height"
             ds["Zsfc"] = ds["Zsfc"] / metpy.constants.g
             ds["Zsfc"].attrs["long_name"] = "geopotential height at surface"
-            ds = ds.drop_dims("half_level")
+            # ds = ds.drop_dims("half_level") # why drop this?
 
         else:
             ds["P"] = (
@@ -332,8 +332,7 @@ def compute_z_level(ds: xarray.Dataset, lev: int, z_h: float) -> Tuple[float, fl
     # Integrate from previous (lower) half-level `z_h` to the
     # full level
     z_f = z_h + (t_level * alpha)
-    if "half_level" in z_f.coords:
-        z_f = z_f.drop_vars("half_level")
+    z_f = z_f.drop_vars("half_level")
     z_f = z_f.assign_coords(level=lev)
 
     # Update the half-level geopotential `z_h`

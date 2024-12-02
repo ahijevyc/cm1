@@ -88,9 +88,11 @@ def mean_lat_lon(lats_deg, lons_deg):
     return lat_mean, lon_mean
 
 
-def neighborhood(args, ds):
-    """mean in neighborhood of args.neighbor points
+def circle_neighborhood(args, ds):
+    """
+    mean in neighborhood of
     of args.lat, args.lon
+    Average args.neighbor points.
     """
     if args.neighbors > 100:
         logging.warning(
@@ -104,11 +106,17 @@ def neighborhood(args, ds):
     (idx,) = BallTree(latlon, metric="haversine").query(
         X, return_distance=False, k=args.neighbors
     )
-    ds = ds.stack(z=("latitude", "longitude")).isel(z=idx)
+    ds = ds.stack(z=("latitude", "longitude")).isel(z=idx).load()
     lat_mean, lon_mean = mean_lat_lon(ds.latitude, ds.longitude)
+    sfc_pressure_range = ds.SP.max() - ds.SP.min()
+    if sfc_pressure_range > 1 * units.hPa:
+        logging.warning(f"sfc_pressure_range: {sfc_pressure_range:~}")
+    sfc_height_range = ds.Zsfc.max() - ds.Zsfc.min()
+    if sfc_height_range > 10 * units.m:
+        logging.warning(f"sfc_height_range: {sfc_height_range:~}")
 
     # Plot requested sounding location and nearest neighbors used for averaging.
-    if logging.getLogger(__name__).getEffectiveLevel() <= logging.DEBUG:
+    if hasattr(args, "debug") and args.debug:
         import cartopy.crs as ccrs
         import cartopy.feature as cfeature
 
@@ -127,11 +135,25 @@ def neighborhood(args, ds):
 
         # Plot the points
         ax.plot(
-            lon_mean, lat_mean, marker="o", color="red", transform=ccrs.PlateCarree()
+            lon_mean,
+            lat_mean,
+            marker="o",
+            transform=ccrs.PlateCarree(),
+            label="mean",
+            linestyle="none",
+        )
+        ax.plot(
+            args.lon.m_as("degrees_E"),
+            args.lat.m_as("degrees_N"),
+            marker=".",
+            transform=ccrs.PlateCarree(),
+            label="request",
+            linestyle="none",
         )
         ax.scatter(ds.longitude, ds.latitude, marker=".", transform=ccrs.PlateCarree())
         ax.set_title(f"{lat_mean.data} {lon_mean.data}")
         ax.gridlines(draw_labels=True)
+        ax.legend()
         plt.show()
         # TODO: remove assertions after function is bug-free
         # assert mean location is close to what was requested.
@@ -142,7 +164,8 @@ def neighborhood(args, ds):
         assert (
             np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))
         ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))}"
-    ds = ds.mean(dim="z")  # lose `z` `latitude` `longitude`
+
+    ds = ds.mean(dim="z")  # drop `z` `latitude` `longitude` dimensions
     ds = ds.assign_coords(latitude=lat_mean, longitude=lon_mean)
     ds.attrs["neighbors"] = args.neighbors
     return ds

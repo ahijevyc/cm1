@@ -24,8 +24,8 @@ from metpy.units import units
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from pint import Quantity
 
-from cm1.io import get_ofile, load_era5
-from cm1.utils import neighborhood, parse_args
+from cm1.sounding import get_ofile, load_era5
+from cm1.utils import circle_neighborhood, parse_args
 
 
 def main() -> None:
@@ -62,7 +62,7 @@ def main() -> None:
             method="nearest",
         )
     else:
-        ds = neighborhood(args, ds)
+        ds = circle_neighborhood(args, ds)
     skewt(ds)
     plt.show()
 
