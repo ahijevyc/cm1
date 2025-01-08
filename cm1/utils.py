@@ -1,11 +1,14 @@
 import argparse
 import logging
-import pdb
+import os
+from pathlib import Path
 
 import numpy as np
 from matplotlib import pyplot as plt
 from metpy.units import units
 from sklearn.neighbors import BallTree
+
+TMPDIR = Path(os.getenv("TMPDIR"))
 
 
 def parse_args() -> argparse.Namespace:
@@ -88,23 +91,23 @@ def mean_lat_lon(lats_deg, lons_deg):
     return lat_mean, lon_mean
 
 
-def circle_neighborhood(args, ds):
+def era5_circle_neighborhood(ds, lat, lon, neighbors, debug=True):
     """
     mean in neighborhood of
-    of args.lat, args.lon
+    of lat, lon
     Average args.neighbor points.
     """
-    if args.neighbors > 100:
+    if neighbors > 100:
         logging.warning(
-            f"averaging {args.neighbors} neighbors along model levels may result in averaging between wildly different pressures and heights"
+            f"averaging {neighbors} neighbors along model levels may result in averaging between wildly different pressures and heights"
         )
     # indexing="ij" allows Dataset.stack dims order to be "latitude", "longitude"
     lat2d, lon2d = np.meshgrid(ds.latitude, ds.longitude, indexing="ij")
     latlon = np.deg2rad(np.vstack([lat2d.ravel(), lon2d.ravel()]).T)
-    X = [[args.lat.m_as("radian"), args.lon.m_as("radian")]]
+    X = [[lat.m_as("radian"), lon.m_as("radian")]]
 
     (idx,) = BallTree(latlon, metric="haversine").query(
-        X, return_distance=False, k=args.neighbors
+        X, return_distance=False, k=neighbors
     )
     ds = ds.stack(z=("latitude", "longitude")).isel(z=idx).load()
     lat_mean, lon_mean = mean_lat_lon(ds.latitude, ds.longitude)
@@ -116,7 +119,7 @@ def circle_neighborhood(args, ds):
         logging.warning(f"sfc_height_range: {sfc_height_range:~}")
 
     # Plot requested sounding location and nearest neighbors used for averaging.
-    if hasattr(args, "debug") and args.debug:
+    if debug:
         import cartopy.crs as ccrs
         import cartopy.feature as cfeature
 
@@ -143,8 +146,8 @@ def circle_neighborhood(args, ds):
             linestyle="none",
         )
         ax.plot(
-            args.lon.m_as("degrees_E"),
-            args.lat.m_as("degrees_N"),
+            lon.m_as("degrees_E"),
+            lat.m_as("degrees_N"),
             marker=".",
             transform=ccrs.PlateCarree(),
             label="request",
@@ -157,15 +160,15 @@ def circle_neighborhood(args, ds):
         plt.show()
         # TODO: remove assertions after function is bug-free
         # assert mean location is close to what was requested.
-        assert abs(lat_mean - args.lat) < 1, f"meanlat {lat_mean} args.lat {args.lat}"
+        assert abs(lat_mean - lat) < 1, f"meanlat {lat_mean} lat {lat}"
         assert (
-            np.cos(np.radians(lon_mean)) - np.cos(np.radians(args.lon))
-        ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.cos(np.radians(lon_mean)) - np.cos(np.radians(args.lon))}"
+            np.cos(np.radians(lon_mean)) - np.cos(np.radians(lon))
+        ) < 0.01, f"meanlon {lon_mean} lon {lon} {np.cos(np.radians(lon_mean)) - np.cos(np.radians(lon))}"
         assert (
-            np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))
-        ) < 0.01, f"meanlon {lon_mean} args.lon {args.lon} {np.sin(np.radians(lon_mean)) - np.sin(np.radians(args.lon))}"
+            np.sin(np.radians(lon_mean)) - np.sin(np.radians(lon))
+        ) < 0.01, f"meanlon {lon_mean} lon {lon} {np.sin(np.radians(lon_mean)) - np.sin(np.radians(lon))}"
 
     ds = ds.mean(dim="z")  # drop `z` `latitude` `longitude` dimensions
     ds = ds.assign_coords(latitude=lat_mean, longitude=lon_mean)
-    ds.attrs["neighbors"] = args.neighbors
+    ds.attrs["neighbors"] = neighbors
     return ds

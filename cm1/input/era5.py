@@ -1,77 +1,89 @@
-"""
-Load ERA5 model dataset for a user-specified time and location.
-
---campaign means use campaign storage.
-Otherwise use s3fs Amazon Web Service bucket or local cached file.
-"""
-
 import logging
 import os
 from pathlib import Path
 from typing import Tuple
 
+import metpy
 import metpy.calc as mcalc
-import metpy.constants
 import numpy as np
 import pandas as pd
 import s3fs
 import xarray
 from metpy.units import units
 
-from cm1.utils import circle_neighborhood, parse_args
-
-TMPDIR = Path(os.getenv("TMPDIR"))
+from cm1.utils import TMPDIR
 
 
-def get_ofile(args):
-    ofile = (
-        TMPDIR
-        / f"{pd.to_datetime(args.time).strftime('%Y%m%d_%H%M%S')}.{args.lat:~}.{args.lon:~}.nc"
-    )
-    return ofile
+def compute_z_level(ds: xarray.Dataset, lev: int, z_h: float) -> Tuple[float, float]:
+    r"""
+    Compute the geopotential at a full level and the overlying half-level.
 
+    This function calculates the geopotential \( z_f \) at a specified full level
+    (given by `lev`) and updates the geopotential at the overlying half-level
+    \( z_h \). The calculation is based on the virtual temperature at full level
+    and pressure at half-levels.
 
-def main() -> None:
+    Parameters:
+    ----------
+    ds : xarray.Dataset
+        The dataset containing the variables required for computation,
+        specifically "Tv" (virtual temperature) and "P_half" (pressure on half-levels).
+    lev : int
+        The level index for the desired full-level geopotential calculation.
+    z_h : float
+        The initial geopotential height at the lower half-level.
+
+    Returns:
+    -------
+    Tuple[float, float]
+        A tuple containing:
+            - `z_h`: The updated geopotential at the overlying half-level.
+            - `z_f`: The computed geopotential at the specified full level.
+
+    References
+    ----------
+    ERA5: Compute pressure and geopotential on model levels, geopotential height, and geometric height.
+    ECMWF Confluence: https://confluence.ecmwf.int/display/CKB/ERA5%3A+compute+pressure+and+geopotential+on+model+levels%2C+geopotential+height+and+geometric+height
     """
-    Main function for loading ERA5 data and printing sounding data.
+    # Virtual temperature at the specified level
+    t_level = ds["Tv"].sel(level=lev)
 
-    If cached data exists, it is loaded from a local file. Otherwise,
-    it retrieves data based on user input and saves it for later use.
-    """
+    # Pressures at the half-levels above and below
+    ph_lev = ds["P_half"].sel(half_level=lev)
+    ph_levplusone = ds["P_half"].sel(half_level=lev + 1)
+    pf_lev = ds["P"].sel(level=lev)
 
-    import pickle
-
-    args = parse_args()
-
-    ofile = get_ofile(args)
-    if os.path.exists(ofile):
-        logging.warning(f"read {ofile}")
-        with open(ofile, "rb") as file:
-            ds = pickle.load(file)
+    if lev == 1:
+        dlog_p = np.log(ph_levplusone / (0.1 * units.Pa))
+        alpha = np.log(2)
     else:
-        ds = load_era5(
-            pd.to_datetime(args.time),
-            campaign=args.campaign,
-            model_levels=args.model_levels,
-            glade=args.glade,
-        )
-        with open(ofile, "wb") as file:
-            logging.warning(f"pickle dump {ofile}")
-            pickle.dump(ds, file)
+        dlog_p = np.log(ph_levplusone / ph_lev)
+        # TODO: understand IFS formulation for alpha. See IFS-documentation-cy47r3 eqn 2.23
+        # alphaIFS = 1.0 - ((ph_lev / (ph_levplusone - ph_lev)) * dlog_p)
+        # @ahijevyc formulation
+        alpha = np.log(ph_levplusone / pf_lev)
+        # Make sure official and @ahijevyc values are close to each other.
+        # assert np.allclose(
+        #    alphaIFS.load(), alpha.load(), atol=1e-2
+        # ), f"{np.abs((alphaIFS-alpha)).max()}"
 
-    if args.neighbors == 1:
-        ds = ds.sel(
-            longitude=args.lon,
-            latitude=args.lat,
-            method="nearest",
-        )
-    else:
-        ds = circle_neighborhood(args, ds)
+    t_level = t_level * metpy.constants.Rd
 
-    print(to_sounding_txt(ds))
+    # Calculate the full-level geopotential `z_f`
+    # Integrate from previous (lower) half-level `z_h` to the
+    # full level
+    z_f = z_h + (t_level * alpha)
+    z_f = z_f.drop_vars("half_level")
+    z_f = z_f.assign_coords(level=lev)
+
+    # Update the half-level geopotential `z_h`
+    z_h = z_h + (t_level * dlog_p)
+    z_h = z_h.assign_coords(half_level=lev).drop_vars("level")
+
+    return z_h, z_f
 
 
-def load_era5(
+def get(
     time: pd.Timestamp,
     campaign: bool = False,
     model_levels: bool = False,
@@ -271,127 +283,3 @@ def s3_era5_dataset(time: pd.Timestamp) -> xarray.Dataset:
     ds["P"] = ds.level * ds.level.metpy.units
 
     return ds
-
-
-def compute_z_level(ds: xarray.Dataset, lev: int, z_h: float) -> Tuple[float, float]:
-    r"""
-    Compute the geopotential at a full level and the overlying half-level.
-
-    This function calculates the geopotential \( z_f \) at a specified full level
-    (given by `lev`) and updates the geopotential at the overlying half-level
-    \( z_h \). The calculation is based on the virtual temperature at full level
-    and pressure at half-levels.
-
-    Parameters:
-    ----------
-    ds : xarray.Dataset
-        The dataset containing the variables required for computation,
-        specifically "Tv" (virtual temperature) and "P_half" (pressure on half-levels).
-    lev : int
-        The level index for the desired full-level geopotential calculation.
-    z_h : float
-        The initial geopotential height at the lower half-level.
-
-    Returns:
-    -------
-    Tuple[float, float]
-        A tuple containing:
-            - `z_h`: The updated geopotential at the overlying half-level.
-            - `z_f`: The computed geopotential at the specified full level.
-
-    References
-    ----------
-    ERA5: Compute pressure and geopotential on model levels, geopotential height, and geometric height.
-    ECMWF Confluence: https://confluence.ecmwf.int/display/CKB/ERA5%3A+compute+pressure+and+geopotential+on+model+levels%2C+geopotential+height+and+geometric+height
-    """
-    # Virtual temperature at the specified level
-    t_level = ds["Tv"].sel(level=lev)
-
-    # Pressures at the half-levels above and below
-    ph_lev = ds["P_half"].sel(half_level=lev)
-    ph_levplusone = ds["P_half"].sel(half_level=lev + 1)
-    pf_lev = ds["P"].sel(level=lev)
-
-    if lev == 1:
-        dlog_p = np.log(ph_levplusone / (0.1 * units.Pa))
-        alpha = np.log(2)
-    else:
-        dlog_p = np.log(ph_levplusone / ph_lev)
-        # TODO: understand IFS formulation for alpha. See IFS-documentation-cy47r3 eqn 2.23
-        # alphaIFS = 1.0 - ((ph_lev / (ph_levplusone - ph_lev)) * dlog_p)
-        # @ahijevyc formulation
-        alpha = np.log(ph_levplusone / pf_lev)
-        # Make sure official and @ahijevyc values are close to each other.
-        # assert np.allclose(
-        #    alphaIFS.load(), alpha.load(), atol=1e-2
-        # ), f"{np.abs((alphaIFS-alpha)).max()}"
-
-    t_level = t_level * metpy.constants.Rd
-
-    # Calculate the full-level geopotential `z_f`
-    # Integrate from previous (lower) half-level `z_h` to the
-    # full level
-    z_f = z_h + (t_level * alpha)
-    z_f = z_f.drop_vars("half_level")
-    z_f = z_f.assign_coords(level=lev)
-
-    # Update the half-level geopotential `z_h`
-    z_h = z_h + (t_level * dlog_p)
-    z_h = z_h.assign_coords(half_level=lev).drop_vars("level")
-
-    return z_h, z_f
-
-
-def to_sounding_txt(ds: xarray.Dataset) -> str:
-    """
-       The format is the same as that for the WRF Model.
-
-     One-line header containing:   sfc pres (mb)    sfc theta (K)    sfc qv (g/kg)
-
-      (Note1: here, "sfc" refers to near-surface atmospheric conditions.
-       Technically, this should be z = 0, but in practice is obtained from the
-       standard reporting height of 2 m AGL/ASL from observations)
-      (Note2: land-surface temperature and/or sea-surface temperature (SST) are
-       specified elsewhere: see tsk0 in namelist.input and/or tsk array in
-       init_surface.F)
-
-    Then, the following lines are:   z (m)    theta (K)   qv (g/kg)    u (m/s)    v (m/s)
-
-      (Note3: # of levels is arbitrary)
-
-        Index:   sfc    =  surface (technically z=0, but typically from 2 m AGL/ASL obs)
-                 z      =  height AGL/ASL
-                 pres   =  pressure
-                 theta  =  potential temperature
-                 qv     =  mixing ratio
-                 u      =  west-east component of velocity
-                 v      =  south-north component of velocity
-
-    Note4:  For final line of input_sounding file, z (m) must be greater than the model top
-            (which is nz * dz when stretch_z=0, or ztop when stretch_z=1,  etc)
-    """
-    # level is either 1-137 for model_levels, or pressure from top to sfc.
-    # Either way, the closest to the sfc is the maximum.
-    assert all(ds.level.diff("level") > 0), "levels not increasing"
-    bottom = ds.level.max()
-    # ds.SP (surface pressure) is half-level below ds.level.max()
-    sfc_pres = ds.SP if "SP" in ds else ds.P.sel(level=bottom)
-    ds["theta"] = mcalc.potential_temperature(ds.P, ds.T).metpy.convert_units("K")
-    sfc_theta_K = ds["theta"].sel(level=bottom)
-    ds["Q"] = ds["Q"].metpy.convert_units("g/kg")
-    sfc_qv_gkg = ds.Q.sel(level=bottom)
-
-    s = f"{sfc_pres.compute().item().m_as('hPa')} {sfc_theta_K.values} {sfc_qv_gkg.values}\n"
-    s += (
-        ds.to_dataframe()
-        .sort_index(ascending=False)  # from surface upward
-        .to_csv(
-            columns=["Z", "theta", "Q", "U", "V"], sep=" ", header=False, index=False
-        )
-    )
-
-    return s
-
-
-if __name__ == "__main__":
-    main()

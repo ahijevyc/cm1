@@ -24,8 +24,9 @@ from metpy.units import units
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from pint import Quantity
 
-from cm1.sounding import get_ofile, load_era5
-from cm1.utils import circle_neighborhood, parse_args
+import cm1.input.era5
+from cm1.input.sounding import get_ofile
+from cm1.utils import era5_circle_neighborhood, parse_args
 
 
 def main() -> None:
@@ -44,7 +45,7 @@ def main() -> None:
         with open(ofile, "rb") as file:
             ds = pickle.load(file)
     else:
-        ds = load_era5(
+        ds = cm1.input.era5.get(
             pd.to_datetime(args.time),
             campaign=args.campaign,
             model_levels=args.model_levels,
@@ -62,7 +63,7 @@ def main() -> None:
             method="nearest",
         )
     else:
-        ds = circle_neighborhood(args, ds)
+        ds = era5_circle_neighborhood(args, ds)
     skewt(ds)
     plt.show()
 
