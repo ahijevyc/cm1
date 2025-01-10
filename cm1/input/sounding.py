@@ -100,25 +100,25 @@ def read_from_txt(file_path):
     ds["SP"] *= units.hPa
     ds["theta"] = ds["theta"] * units.K
     ds["Z"] = ds["Z"] * units.m
-    # TODO: calculate pressure from surface pressure and theta
-    ds["P"] = ds["SP"] * np.exp(
-        -metpy.constants.g * ds["Z"] / metpy.constants.Rd / ds["theta"]
-    )
     p_bot = ds.SP.copy()  # copy to avoid modifying the original when adding dp
     z_bot = 0.0 * units.m
     P = []  # pressure
-    dz = ds["Z"].diff("level")
     for level in ds.level:
         T = mcalc.temperature_from_potential_temperature(
             p_bot, ds.theta.sel(level=level)
         )
         dz = ds.Z.sel(level=level) - z_bot
         dp = p_bot * -metpy.constants.g * dz / metpy.constants.Rd / T
-        P.append(p_bot.values + dp.values)
         p_bot += dp
+        if p_bot < 0 * units.hPa:
+            logging.error(
+                f"p_bot<0 {p_bot:~} dp {dp:~} dz {dz:~} T {T:~}. set to 0 hPa"
+            )
+            p_bot = 0.0 * units.hPa
+        P.append(p_bot.item().m_as(ds.SP.metpy.units))
         z_bot = ds.Z.sel(level=level)
-    ds["p"] = xarray.DataArray(np.array(P), coords=[ds.level])
-    ds["p"] *= ds.SP.metpy.units
+    ds["P"] = xarray.DataArray(P, coords=[ds.level])
+    ds["P"] *= ds.SP.metpy.units
     ds["T"] = mcalc.temperature_from_potential_temperature(ds["P"], ds["theta"])
     ds["Tv"] = mcalc.thermo.virtual_temperature(ds.T, ds.Q)
     ds["surface_potential_temperature"] = surface_theta

@@ -114,7 +114,18 @@ def skewt(
     #  ValueError: ODE Integration failed likely due to small values of pressure.
     # Side effect of Dataset.where is that DataArrays without
     # a level dimension like SP are broadcast to all levels.
-    ds = ds.where(ds.P >= ptop, drop=True)
+    # Apply mask only to variables with the 'level' dimension
+    ds = xarray.Dataset(
+        {
+            var: (
+                ds[var].where(ds.P >= ptop, drop=True)
+                if "level" in ds[var].dims
+                else ds[var]
+            )
+            for var in ds
+        }
+    )
+
     logging.warning(f"After dropping low pressure levels, {ds.level.size} remain")
 
     # if args.model_levels, ds["P"] is 3D DataArray with vertical dim = model level.
@@ -138,7 +149,7 @@ def skewt(
     # Find the level label with the maximum pressure.
     # I used to use the level with the highest numeric value. This worked for ERA5 but not CM1 input soundings.
     sfc = ds.level.sel(level=ds.P.idxmax())
-    logging.warning(f"surface pressure {ds.P.sel(level=sfc).item()}")
+    logging.warning(f"surface pressure {ds.P.sel(level=sfc).item():~}")
     skew = SkewT(fig, subplot=subplot, rotation=rotation)
     # Add the relevant special lines
     skew.plot_dry_adiabats(lw=0.75, alpha=0.5)
@@ -181,7 +192,7 @@ def skewt(
     # Create reverse sorted array of pressure. mpcalc assumes bottom-up arrays.
     p = np.sort(p)[::-1]
     # Interpolate other variables to p array (which now includes LCL).
-    t, Td, u, v, height, Tv, Zsfc, sp = interpolate_1d(
+    t, Td, u, v, height, Tv = interpolate_1d(
         p,
         p_without_lcl,
         t,
@@ -190,20 +201,32 @@ def skewt(
         v,
         height,
         Tv,
-        ds.Zsfc,
-        ds.SP,
     )
-    print(t)
     # T and Td were already turned from DataArrays into simple Quantity arrays
     # so you can't use .sel method here. That's why I use t[0] instead of t.sel(level=sfc).
-    prof = mpcalc.parcel_profile(p, t[0], Td[0])
+    t_parcel = t[0]
+    Td_parcel = Td[0]
+    q_parcel = mpcalc.mixing_ratio(mpcalc.saturation_vapor_pressure(Td_parcel), ds.SP)
+    # Use surface values for parcel if the Dataset has them
+    if "surface_potential_temperature" in ds:
+        t_parcel = mpcalc.temperature_from_potential_temperature(
+            ds.SP, ds.surface_potential_temperature
+        )
+    if "surface_mixing_ratio" in ds:
+        q_parcel = ds.surface_mixing_ratio
+        e = mpcalc.vapor_pressure(ds.SP, q_parcel)
+        Td_parcel = mpcalc.dewpoint(e)
+    print(
+        f"t_parcel {t_parcel.item():~} Td_parcel {Td_parcel.item():~} q_parcel {q_parcel.item():~}"
+    )
+    prof = mpcalc.parcel_profile(p, t_parcel, Td_parcel)
     prof_mixing_ratio = mpcalc.mixing_ratio_from_relative_humidity(
         p, prof, 1
     )  # saturated mixing ratio
 
-    prof_mixing_ratio[p >= lcl_pressure] = ds.Q.sel(
-        level=sfc
-    ).item()  # unsaturated mixing ratio (constant up to LCL)
+    prof_mixing_ratio[p >= lcl_pressure] = (
+        q_parcel.item()  # unsaturated mixing ratio (constant up to LCL)
+    )
     # parcel virtual temperature
     profTv = mpcalc.virtual_temperature(prof, prof_mixing_ratio)
 
@@ -252,10 +275,24 @@ def skewt(
     title += f"storm_u={storm_u:~.1f}   storm_v={storm_v:~.1f}"
     title += f"\n0-3km srh+={srh03_pos:~.0f}   srh-={srh03_neg:~.0f}   srh(tot)={srh03_tot:~.0f}"
 
+    agl = height - ds.Zsfc.item()  # TODO: is .item() neccessary?
+    label_hgts = [0, 1, 3, 6, 9, 12, 15] * units("km")
+    agl_colors = ["red", "red", "lime", "green", "blueviolet", "cyan"]
+    # Find corresponding colors
+    barbcolor = []
+    for h in agl:
+        # Find the appropriate interval
+        index = np.searchsorted(label_hgts, h, side="right") - 1
+        if index < len(agl_colors):
+            barbcolor.append(agl_colors[index])
+        else:
+            barbcolor.append("none")
+
     bbz = skew.plot_barbs(
         p,
         u,
         v,
+        barbcolor=barbcolor,
         length=6,
         plot_units=plot_barbs_units,
         linewidth=0.6,
@@ -270,16 +307,13 @@ def skewt(
     ax_hod.set_xlabel("")
     ax_hod.set_ylabel("")
 
-    agl = height - Zsfc
-    label_hgts = [0, 1, 3, 6, 9, 12, 15] * units("km")
-
     # Label AGL intervals in hodograph and along the y-axis of the skewT.
     for label_hgt in label_hgts:
         (agl2p,) = interpolate_1d(label_hgt, agl, p)
         s = f"{label_hgt:~.0f}"
         if label_hgt == 0 * units.km:
-            agl2p = sp[0]
-            s = f"SFC ({Zsfc[0]:~.0f})"
+            agl2p = ds.SP.item()
+            s = f"SFC ({ds.Zsfc.item():~.0f})"
         skew.ax.plot([0, 0.01], 2 * [agl2p.m_as("hPa")], transform=trans, color="brown")
         skew.ax.text(
             0.01,
@@ -299,9 +333,9 @@ def skewt(
     h.plot_colormapped(
         u,
         v,
-        height,
+        agl,
         intervals=label_hgts,
-        colors=["red", "red", "lime", "green", "blueviolet", "cyan"],
+        colors=agl_colors,
     )
     ax_hod.plot(storm_u, storm_v, "x")
     skew.ax.set_title(title, fontsize="x-small")
