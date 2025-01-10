@@ -8,6 +8,7 @@ data, as well as dry adiabats, moist adiabats, and mixing lines on the Skew-T di
 
 import logging
 import os
+import pdb
 import pickle
 from typing import Optional, Tuple
 
@@ -108,12 +109,13 @@ def skewt(
     assert "SP" in ds, "skewt needs surface pressure SP"
     # Avoid plot_colormapped KeyError: 'Indexing with a boolean dask array is not allowed.
     # and allow .where function to check condition
-    ds = ds.compute()
+    ds = ds.load()
     # Drop low pressure model levels to avoid
     #  ValueError: ODE Integration failed likely due to small values of pressure.
     # Side effect of Dataset.where is that DataArrays without
     # a level dimension like SP are broadcast to all levels.
     ds = ds.where(ds.P >= ptop, drop=True)
+    logging.warning(f"After dropping low pressure levels, {ds.level.size} remain")
 
     # if args.model_levels, ds["P"] is 3D DataArray with vertical dim = model level.
     # Otherwise pressure is ds.level, a 1-D array of pressure.
@@ -133,7 +135,10 @@ def skewt(
     u = ds.U.metpy.convert_units(plot_barbs_units)
     v = ds.V.metpy.convert_units(plot_barbs_units)
 
-    sfc = ds.level.max()
+    # Find the level label with the maximum pressure.
+    # I used to use the level with the highest numeric value. This worked for ERA5 but not CM1 input soundings.
+    sfc = ds.level.sel(level=ds.P.idxmax())
+    logging.warning(f"surface pressure {ds.P.sel(level=sfc).item()}")
     skew = SkewT(fig, subplot=subplot, rotation=rotation)
     # Add the relevant special lines
     skew.plot_dry_adiabats(lw=0.75, alpha=0.5)
@@ -146,7 +151,7 @@ def skewt(
     lcl_pressure, lcl_temperature = mpcalc.lcl(
         p.sel(level=sfc), t.sel(level=sfc), Td.sel(level=sfc)
     )
-    logging.info(f"lcl_pressure {lcl_pressure} lcl_temperature {lcl_temperature}")
+    logging.warning(f"lcl_p {lcl_pressure:~} lcl_t {lcl_temperature:~}")
 
     trans = transforms.blended_transform_factory(skew.ax.transAxes, skew.ax.transData)
     skew.ax.plot(
@@ -169,7 +174,7 @@ def skewt(
         p = np.append(p.data, lcl_pressure)
     else:
         # Averaging temperature, pressure, and mixing ratio along levels can
-        # make mixing ratio above saturation, making LCL is below profile.
+        # make mixing ratio above saturation, making LCL below profile.
         # Don't bother adding lcl_pressure point in that case.
         logging.warning(f"lcl outside range of p {p.min()} {p.max()}")
         p = p.data  # convert to Quantity array (with units) so we can sort it
@@ -188,9 +193,9 @@ def skewt(
         ds.Zsfc,
         ds.SP,
     )
-
+    print(t)
     # T and Td were already turned from DataArrays into simple Quantity arrays
-    # so you can't use .sel method here.
+    # so you can't use .sel method here. That's why I use t[0] instead of t.sel(level=sfc).
     prof = mpcalc.parcel_profile(p, t[0], Td[0])
     prof_mixing_ratio = mpcalc.mixing_ratio_from_relative_humidity(
         p, prof, 1
@@ -210,10 +215,29 @@ def skewt(
     # Parcel virtual temperature
     skew.plot(p, profTv, "k", linewidth=1.5, linestyle="dashed")
 
-    sfcape, sfcin = mpcalc.cape_cin(p, Tv, Td, profTv)
+    # TODO: get working with CM1 test soundings
+    sfcape, sfcin = None, None
+    # sfcape, sfcin = mpcalc.cape_cin(p, Tv, Td, profTv)
     # Shade areas of CAPE and CIN
     skew.shade_cin(p, Tv, profTv)
     skew.shade_cape(p, Tv, profTv)
+
+    # Good bounds for aspect ratio
+    skew.ax.set_xlim(-40, 55)
+    skew.ax.set_ylim(None, ptop)
+
+    title = ""
+    if "time" in ds:
+        title += f"{ds.time.data} "
+    if "longitude" in ds:
+        title += f"{ds.longitude.item():.3f} {ds.latitude.item():.3f}"
+    if sfcape is not None:
+        title += f"\nsfcape={sfcape:~.0f}   sfcin={sfcin:~.0f}   "
+    skew.ax.set_title(title, fontsize="x-small")
+
+    skip_winds = not u.any() and not v.any()
+    if skip_winds:
+        return skew
 
     logging.info("work on winds and kinematics")
     storm_u = 0.0 * units("m/s")
@@ -223,6 +247,10 @@ def skewt(
     srh03_pos, srh03_neg, srh03_tot = mpcalc.storm_relative_helicity(
         height, u, v, 3 * units.km, storm_u=storm_u, storm_v=storm_v
     )
+
+    title += f"\nwind barbs and hodograph in {plot_barbs_units} {barb_increments}"
+    title += f"storm_u={storm_u:~.1f}   storm_v={storm_v:~.1f}"
+    title += f"\n0-3km srh+={srh03_pos:~.0f}   srh-={srh03_neg:~.0f}   srh(tot)={srh03_tot:~.0f}"
 
     bbz = skew.plot_barbs(
         p,
@@ -234,16 +262,6 @@ def skewt(
         xloc=1.05,
         barb_increments=barb_increments,
     )
-
-    # Good bounds for aspect ratio
-    skew.ax.set_xlim(-40, 55)
-    skew.ax.set_ylim(None, ptop)
-
-    title = f"{ds.time.data} {ds.longitude.item():.3f} {ds.latitude.item():.3f}"
-    title += f"\nwind barbs and hodograph in {plot_barbs_units} {barb_increments}"
-    title += f"\nsfcape={sfcape:~.0f}   sfcin={sfcin:~.0f}   storm_u={storm_u:~.1f}   storm_v={storm_v:~.1f}"
-    title += f"\n0-3km srh+={srh03_pos:~.0f}   srh-={srh03_neg:~.0f}   srh(tot)={srh03_tot:~.0f}"
-    skew.ax.set_title(title, fontsize="x-small")
 
     logging.warning("Create hodograph")
     ax_hod = inset_axes(skew.ax, "40%", "40%", loc=1)
@@ -286,6 +304,7 @@ def skewt(
         colors=["red", "red", "lime", "green", "blueviolet", "cyan"],
     )
     ax_hod.plot(storm_u, storm_v, "x")
+    skew.ax.set_title(title, fontsize="x-small")
 
     return skew
 

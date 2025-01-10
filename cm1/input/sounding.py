@@ -9,11 +9,27 @@ import logging
 import os
 
 import metpy.calc as mcalc
+import metpy.constants
+import numpy as np
 import pandas as pd
 import xarray
+from metpy.units import units
 
 import cm1.input.era5
 from cm1.utils import TMPDIR, era5_circle_neighborhood, parse_args
+
+# Assuming this script is located in a subdirectory of the repository
+repo_base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+soundings_path = os.path.join(repo_base_path, "soundings")
+
+
+def era5(ds, lat, lon):
+    ds = ds.sel(
+        longitude=lon,
+        latitude=lat,
+        method="nearest",
+    )
+    return ds
 
 
 def get_ofile(args):
@@ -22,6 +38,98 @@ def get_ofile(args):
         / f"{pd.to_datetime(args.time).strftime('%Y%m%d_%H%M%S')}.{args.lat:~}.{args.lon:~}.nc"
     )
     return ofile
+
+
+def get_case(case):
+    file_path = os.path.join(soundings_path, f"input_sounding_{case}")
+    ds = read_from_txt(file_path)
+    ds["case"] = case
+    return ds
+
+
+def trier():
+    return get_case("trier")
+
+
+def jordan_allmean():
+    return get_case("jordan_allmean")
+
+
+def jordan_hurricane():
+    return get_case("jordan_hurricane")
+
+
+def rotunno_emanuel():
+    return get_case("rotunno_emanuel")
+
+
+def dunion_MT():
+    return get_case("dunion_MT")
+
+
+def bryan_morrison():
+    return get_case("bryan_morrison")
+
+
+def seabreeze_test():
+    return get_case("seabreeze_test")
+
+
+def read_from_txt(file_path):
+    """
+    read CM1 sounding file format
+    """
+    # Open the file and read the first line (header with surface variables)
+    with open(file_path, "r") as file:
+        # Read the first line
+        header = file.readline().strip()
+        # Split the header into surface variables
+        surface_pressure, surface_theta, surface_mixing_ratio = map(
+            float, header.split()
+        )
+
+    # Read the remaining columns into a pandas DataFrame
+    # Specify column names and skip the first line (header)
+    column_names = ["Z", "theta", "Q", "U", "V"]
+    df = pd.read_csv(file_path, sep=r"\s+", skiprows=1, names=column_names)
+    # Rename the index to "level"
+    df = df.rename_axis("level")
+    ds = df.to_xarray()
+    ds["Q"] = ds["Q"] * units.g / units.kg
+    ds["SP"] = surface_pressure
+    ds["SP"] *= units.hPa
+    ds["theta"] = ds["theta"] * units.K
+    ds["Z"] = ds["Z"] * units.m
+    # TODO: calculate pressure from surface pressure and theta
+    ds["P"] = ds["SP"] * np.exp(
+        -metpy.constants.g * ds["Z"] / metpy.constants.Rd / ds["theta"]
+    )
+    p_bot = ds.SP.copy()  # copy to avoid modifying the original when adding dp
+    z_bot = 0.0 * units.m
+    P = []  # pressure
+    dz = ds["Z"].diff("level")
+    for level in ds.level:
+        T = mcalc.temperature_from_potential_temperature(
+            p_bot, ds.theta.sel(level=level)
+        )
+        dz = ds.Z.sel(level=level) - z_bot
+        dp = p_bot * -metpy.constants.g * dz / metpy.constants.Rd / T
+        P.append(p_bot.values + dp.values)
+        p_bot += dp
+        z_bot = ds.Z.sel(level=level)
+    ds["p"] = xarray.DataArray(np.array(P), coords=[ds.level])
+    ds["p"] *= ds.SP.metpy.units
+    ds["T"] = mcalc.temperature_from_potential_temperature(ds["P"], ds["theta"])
+    ds["Tv"] = mcalc.thermo.virtual_temperature(ds.T, ds.Q)
+    ds["surface_potential_temperature"] = surface_theta
+    ds["surface_potential_temperature"] *= units.K
+    ds["surface_mixing_ratio"] = surface_mixing_ratio
+    ds["surface_mixing_ratio"] *= units.g / units.kg
+    ds["Zsfc"] = 0.0
+    ds["Zsfc"] *= units.m
+    ds["U"] = ds["U"] * units.m / units.s
+    ds["V"] = ds["V"] * units.m / units.s
+    return ds
 
 
 def main() -> None:
@@ -53,11 +161,7 @@ def main() -> None:
             pickle.dump(ds, file)
 
     if args.neighbors == 1:
-        ds = ds.sel(
-            longitude=args.lon,
-            latitude=args.lat,
-            method="nearest",
-        )
+        ds = era5(ds, args.lat, args.lon)
     else:
         ds = era5_circle_neighborhood(ds, args.lat, args.lon, args.neighbors)
 
