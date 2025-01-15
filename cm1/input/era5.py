@@ -1,5 +1,6 @@
 import logging
 import os
+import pdb
 from pathlib import Path
 from typing import Tuple
 
@@ -85,8 +86,8 @@ def compute_z_level(ds: xarray.Dataset, lev: int, z_h: float) -> Tuple[float, fl
 
 def get(
     time: pd.Timestamp,
-    campaign: bool = False,
-    model_levels: bool = False,
+    campaign: bool = True,
+    model_levels: bool = True,
     glade: Path = Path("/"),
 ) -> xarray.Dataset:
     """
@@ -108,7 +109,9 @@ def get(
     """
     if campaign or model_levels:
         if not campaign:
-            logging.warning("getting model_levels from campaign storage")
+            logging.warning(
+                "getting model_levels from campaign storage because model_levels=True"
+            )
 
         # get from campaign storage
         rdapath = Path(glade) / "glade/campaign/collections/rda/data"
@@ -231,7 +234,9 @@ def s3_era5_dataset(time: pd.Timestamp) -> xarray.Dataset:
     """
     # Define the S3 bucket name and ERA5 path
     S3_BUCKET = "nsf-ncar-era5"
-    S3_PATH_TEMPLATE = S3_BUCKET + f"/e5.oper.an.pl/{time.year}{time.month:02d}"
+
+    # Why not use this? It's managed by some private company
+    # https://registry.opendata.aws/ecmwf-era5/
 
     # Define the cache directory
     CACHE_DIR = TMPDIR / "era5_cache"
@@ -239,6 +244,7 @@ def s3_era5_dataset(time: pd.Timestamp) -> xarray.Dataset:
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
 
+    # pressure level data
     cache_file_paths = []
     for var in [
         "133_q.ll025sc",
@@ -249,6 +255,7 @@ def s3_era5_dataset(time: pd.Timestamp) -> xarray.Dataset:
         "129_z.ll025sc",
     ]:
         file_name = f"e5.oper.an.pl.128_{var}.{time.strftime('%Y%m%d00')}_{time.strftime('%Y%m%d23')}.nc"
+
         cache_file_path = CACHE_DIR / file_name
         cache_file_paths.append(cache_file_path)
 
@@ -257,14 +264,13 @@ def s3_era5_dataset(time: pd.Timestamp) -> xarray.Dataset:
             logging.warning(f"Found cached s3 {var} {time}")
             continue
 
-        # If not cached, download from S3
+        # Download from S3
+        if "s3" not in globals():
+            s3 = s3fs.S3FileSystem(anon=True)
 
-        # Connect to S3 bucket
-        s3 = s3fs.S3FileSystem(anon=True)
-
-        # Generate the file name based on time
-        # Full key of the file in the S3 bucket
-        s3_file_path = f"{S3_PATH_TEMPLATE}/{file_name}"
+        s3_file_path = (
+            S3_BUCKET + f"/e5.oper.an.pl/{time.year}{time.month:02d}/{file_name}"
+        )
 
         # Check if file exists in the S3 bucket
         if not s3.exists(s3_file_path):
@@ -276,10 +282,93 @@ def s3_era5_dataset(time: pd.Timestamp) -> xarray.Dataset:
             xarray.open_dataset(f).to_netcdf(cache_file_path)
         logging.warning(f"Downloaded and cached: {cache_file_path}")
 
-    ds = xarray.open_mfdataset(cache_file_paths).drop_vars("utc_date")
-    logging.warning(f"selected {time}")
-    ds = ds.sel(time=time)
-    ds = ds.metpy.quantify()
-    ds["P"] = ds.level * ds.level.metpy.units
+    ds_pl = xarray.open_mfdataset(cache_file_paths).drop_vars("utc_date")
+    logging.warning(f"selecting {time} from ds_pl")
+    ds_pl = ds_pl.sel(time=time)
+    ds_pl = ds_pl.metpy.quantify()
+    ds_pl["P"] = ds_pl.level * ds_pl.level.metpy.units
+    # Convert geopotential to geopotential height
+    ds_pl["Z"] /= metpy.constants.g
+
+    # surface data
+    cache_file_paths = []
+    for var in [
+        "134_sp.ll025sc",
+        "167_2t.ll025sc",
+        "168_2d.ll025sc",
+    ]:
+        lastdayofmonth = time + pd.offsets.MonthEnd(0)
+        file_name = f"e5.oper.an.sfc.128_{var}.{time.strftime('%Y%m')}0100_{time.strftime('%Y%m')}{lastdayofmonth.strftime('%d')}23.nc"
+        cache_file_path = CACHE_DIR / file_name
+        cache_file_paths.append(cache_file_path)
+
+        # Check if the file is already cached.
+        if os.path.exists(cache_file_path):
+            logging.warning(f"Found cached s3 {var} {time}")
+            continue
+
+        # Download from S3
+        if "s3" not in globals():
+            s3 = s3fs.S3FileSystem(anon=True)
+
+        s3_file_path = (
+            S3_BUCKET + f"/e5.oper.an.sfc/{time.year}{time.month:02d}/{file_name}"
+        )
+
+        # Check if file exists in the S3 bucket
+        if not s3.exists(s3_file_path):
+            raise FileNotFoundError(f"{s3_file_path} not found in S3 bucket")
+
+        # Download the file
+        logging.warning(f"Downloading {s3_file_path} from S3...")
+        with s3.open(s3_file_path, "rb") as f:
+            xarray.open_dataset(f).to_netcdf(cache_file_path)
+        logging.warning(f"Downloaded and cached: {cache_file_path}")
+
+    ds_sfc = xarray.open_mfdataset(cache_file_paths).drop_vars("utc_date")
+    logging.warning(f"selecting {time} from ds_sfc")
+    ds_sfc = ds_sfc.sel(time=time)
+    ds_sfc = ds_sfc.metpy.quantify()
+
+    # Calculate surface potential temperature and mixing ratio
+    ds_sfc["surface_potential_temperature"] = mcalc.potential_temperature(
+        ds_sfc.SP,
+        ds_sfc.VAR_2T,
+    )
+    ds_sfc["surface_mixing_ratio"] = mcalc.mixing_ratio_from_specific_humidity(
+        mcalc.specific_humidity_from_dewpoint(ds_sfc.SP, ds_sfc.VAR_2D)
+    )
+
+    # invariant field geopotential height at surface
+    file_name = "e5.oper.invariant.128_129_z.ll025sc.1979010100_1979010100.nc"
+    cache_file_path = CACHE_DIR / file_name
+    # Check if the file is already cached.
+    if os.path.exists(cache_file_path):
+        logging.warning(f"Found cached s3 invariant z")
+    else:
+        # Download from S3
+        # Connect to S3 bucket
+        if "s3" not in globals():
+            s3 = s3fs.S3FileSystem(anon=True)
+
+        s3_file_path = S3_BUCKET + "/e5.oper.invariant/197901/" + file_name
+
+        # Check if file exists in the S3 bucket
+        if not s3.exists(s3_file_path):
+            raise FileNotFoundError(f"{s3_file_path} not found in S3 bucket")
+
+        # Download the file
+        logging.warning(f"Downloading {s3_file_path} from S3...")
+        with s3.open(s3_file_path, "rb") as f:
+            xarray.open_dataset(f).to_netcdf(cache_file_path)
+        logging.warning(f"Downloaded and cached: {cache_file_path}")
+
+    Zsfc = (
+        xarray.open_dataset(cache_file_path, drop_variables=["utc_date", "time"])
+        .squeeze(dim="time")
+        .metpy.quantify()
+        .rename_vars({"Z": "Zsfc"})
+    ) / metpy.constants.g
+    ds = ds_pl.merge(ds_sfc).merge(Zsfc)
 
     return ds
