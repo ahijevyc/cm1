@@ -109,7 +109,9 @@ def skewt(
     assert "SP" in ds, "skewt needs surface pressure SP"
     # Avoid plot_colormapped KeyError: 'Indexing with a boolean dask array is not allowed.
     # and allow .where function to check condition
+    logging.warning("load dataset")
     ds = ds.load()
+    old_nlevel = ds.level.size
     # Drop low pressure model levels to avoid
     #  ValueError: ODE Integration failed likely due to small values of pressure.
     # Side effect of Dataset.where is that DataArrays without
@@ -126,7 +128,9 @@ def skewt(
         }
     )
 
-    logging.warning(f"After dropping low pressure levels, {ds.level.size} remain")
+    logging.info(
+        f"After dropping low pressure levels, {ds.level.size}/{old_nlevel} remain"
+    )
 
     # if args.model_levels, ds["P"] is 3D DataArray with vertical dim = model level.
     # Otherwise pressure is ds.level, a 1-D array of pressure.
@@ -149,20 +153,20 @@ def skewt(
     # Find the level label with the maximum pressure.
     # I used to use the level with the highest numeric value. This worked for ERA5 but not CM1 input soundings.
     sfc = ds.level.sel(level=ds.P.idxmax())
-    logging.warning(f"surface pressure {ds.P.sel(level=sfc).item():~}")
+    logging.info(f"surface pressure {ds.P.sel(level=sfc).item():~}")
     skew = SkewT(fig, subplot=subplot, rotation=rotation)
     # Add the relevant special lines
     skew.plot_dry_adiabats(lw=0.75, alpha=0.5)
-    skew.plot_moist_adiabats(lw=0.75, alpha=0.5)
+    skew.plot_moist_adiabats(lw=0.75, alpha=0.25)
     skew.plot_mixing_lines(alpha=0.5)
     # Slanted line on 0 isotherm
-    skew.ax.axvline(0, color="c", linestyle="--", linewidth=2)
+    skew.ax.axvline(0, color="c", linestyle="--", linewidth=2, alpha=0.5)
 
     # Calculate LCL pressure and label it on SkewT.
     lcl_pressure, lcl_temperature = mpcalc.lcl(
         p.sel(level=sfc), t.sel(level=sfc), Td.sel(level=sfc)
     )
-    logging.warning(f"lcl_p {lcl_pressure:~} lcl_t {lcl_temperature:~}")
+    logging.info(f"lcl_p {lcl_pressure:~} lcl_t {lcl_temperature:~}")
 
     trans = transforms.blended_transform_factory(skew.ax.transAxes, skew.ax.transData)
     skew.ax.plot(
@@ -216,7 +220,7 @@ def skewt(
         q_parcel = ds.surface_mixing_ratio
         e = mpcalc.vapor_pressure(ds.SP, q_parcel)
         Td_parcel = mpcalc.dewpoint(e)
-    print(
+    logging.info(
         f"t_parcel {t_parcel.item():~} Td_parcel {Td_parcel.item():~} q_parcel {q_parcel.item():~}"
     )
     prof = mpcalc.parcel_profile(p, t_parcel, Td_parcel)
@@ -258,6 +262,28 @@ def skewt(
         title += f"\nsfcape={sfcape:~.0f}   sfcin={sfcin:~.0f}   "
     skew.ax.set_title(title, fontsize="x-small")
 
+    agl = height - ds.Zsfc.item()
+
+    label_hgts = [0, 1, 3, 6, 9, 12, 15] * units("km")
+    # Label AGL intervals along the y-axis of the skewT.
+    for label_hgt in label_hgts:
+        if label_hgt >= agl.min() and label_hgt <= agl.max():
+            (agl2p,) = interpolate_1d(label_hgt, agl, p)
+        s = f"{label_hgt:~.0f}"
+        if label_hgt == 0 * units.km:
+            agl2p = ds.SP.item()
+            s = f"SFC ({ds.Zsfc.item():~.0f})"
+        skew.ax.plot([0, 0.01], 2 * [agl2p.m_as("hPa")], transform=trans, color="brown")
+        skew.ax.text(
+            0.01,
+            agl2p,
+            s,
+            transform=trans,
+            horizontalalignment="left",
+            verticalalignment="center",
+            color="brown",
+        )
+
     skip_winds = not u.any() and not v.any()
     if skip_winds:
         return skew
@@ -271,12 +297,10 @@ def skewt(
         height, u, v, 3 * units.km, storm_u=storm_u, storm_v=storm_v
     )
 
-    title += f"\nwind barbs and hodograph in {plot_barbs_units} {barb_increments}"
+    title += f"\nhodograph, wind barb in {plot_barbs_units} {barb_increments}"
     title += f"storm_u={storm_u:~.1f}   storm_v={storm_v:~.1f}"
     title += f"\n0-3km srh+={srh03_pos:~.0f}   srh-={srh03_neg:~.0f}   srh(tot)={srh03_tot:~.0f}"
 
-    agl = height - ds.Zsfc.item()  # TODO: is .item() neccessary?
-    label_hgts = [0, 1, 3, 6, 9, 12, 15] * units("km")
     agl_colors = ["red", "red", "lime", "green", "blueviolet", "cyan"]
     # Find corresponding colors
     barbcolor = []
@@ -300,36 +324,22 @@ def skewt(
         barb_increments=barb_increments,
     )
 
-    logging.warning("Create hodograph")
+    logging.info("Create hodograph")
     ax_hod = inset_axes(skew.ax, "40%", "40%", loc=1)
     h = Hodograph(ax_hod, component_range=30.0)
     h.add_grid(increment=10, linewidth=0.75)
     ax_hod.set_xlabel("")
     ax_hod.set_ylabel("")
 
-    # Label AGL intervals in hodograph and along the y-axis of the skewT.
+    # Label AGL intervals in hodograph.
     for label_hgt in label_hgts:
-        (agl2p,) = interpolate_1d(label_hgt, agl, p)
-        s = f"{label_hgt:~.0f}"
-        if label_hgt == 0 * units.km:
-            agl2p = ds.SP.item()
-            s = f"SFC ({ds.Zsfc.item():~.0f})"
-        skew.ax.plot([0, 0.01], 2 * [agl2p.m_as("hPa")], transform=trans, color="brown")
-        skew.ax.text(
-            0.01,
-            agl2p,
-            s,
-            transform=trans,
-            horizontalalignment="left",
-            verticalalignment="center",
-            color="brown",
-        )
         ax_hod.text(
             np.interp(label_hgt, agl, u),
             np.interp(label_hgt, agl, v),
             label_hgt.to("km").m,
             fontsize=7,
         )
+
     h.plot_colormapped(
         u,
         v,

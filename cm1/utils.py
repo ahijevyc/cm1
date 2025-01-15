@@ -120,6 +120,7 @@ def era5_circle_neighborhood(ds, lat, lon, neighbors, debug=True):
 
     # Plot requested sounding location and nearest neighbors used for averaging.
     if debug:
+        logging.warning(f"plotting {lat_mean} {lon_mean}")
         import cartopy.crs as ccrs
         import cartopy.feature as cfeature
 
