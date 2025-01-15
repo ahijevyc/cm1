@@ -5,7 +5,7 @@ Requirements
 
 Get ERA5 sounding for CM1.
 ```csh
-python cm1/input/sounding.py 20240518T18 \
+python input/sounding.py 20240518T18 \
              --lat 35.0 \
              --lon -97.5 \
 ```
