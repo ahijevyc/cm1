@@ -48,8 +48,6 @@ def main() -> None:
     else:
         ds = cm1.input.era5.get(
             pd.to_datetime(args.time),
-            campaign=args.campaign,
-            model_levels=args.model_levels,
             glade=args.glade,
         )
     with open(ofile, "wb") as file:
@@ -57,14 +55,11 @@ def main() -> None:
 
     logging.warning(f"select {args}")
 
-    if args.neighbors == 1:
-        ds = ds.sel(
-            longitude=args.lon,
-            latitude=args.lat,
-            method="nearest",
-        )
-    else:
-        ds = era5_circle_neighborhood(args, ds)
+    ds = ds.sel(
+        longitude=args.lon,
+        latitude=args.lat,
+        method="nearest",
+    )
     skewt(ds)
     plt.show()
 

@@ -11,7 +11,7 @@
 
 # Usage:
 #   ./script_name.csh <case> [-f]
-#     <case>: Name of the simulation case (e.g., "case1").
+#     <case>: Name of the simulation case (e.g., "dunion_MT").
 #     -f    : (Optional) Force overwrite of existing run directories.
 
 # Path to the CM1 repository

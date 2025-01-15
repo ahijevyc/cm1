@@ -262,13 +262,14 @@ def main() -> None:
     Main function for loading ERA5 data and printing sounding data.
 
     If cached data exists, it is loaded from a local file. Otherwise,
-    it retrieves data based on user input and saves it for later use.
+    it retrieves data based on user input and caches it for later use.
     """
 
     import pickle
 
     args = parse_args()
 
+    valid_time = pd.to_datetime(args.time)
     ofile = get_ofile(args)
     if os.path.exists(ofile):
         logging.warning(f"read {ofile}")
@@ -276,19 +277,14 @@ def main() -> None:
             ds = pickle.load(file)
     else:
         ds = cm1.input.era5.get(
-            pd.to_datetime(args.time),
-            campaign=args.campaign,
-            model_levels=args.model_levels,
+            valid_time,
             glade=args.glade,
         )
         with open(ofile, "wb") as file:
             logging.warning(f"pickle dump {ofile}")
             pickle.dump(ds, file)
 
-    if args.neighbors == 1:
-        ds = era5(ds, args.lat, args.lon)
-    else:
-        ds = era5_circle_neighborhood(ds, args.lat, args.lon, args.neighbors)
+    ds = era5(valid_time, args.lat, args.lon)
 
     print(to_txt(ds))
 

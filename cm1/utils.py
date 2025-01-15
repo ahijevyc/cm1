@@ -19,10 +19,10 @@ def parse_args() -> argparse.Namespace:
     -------
     argparse.Namespace
         Parsed command-line arguments including time, longitude, latitude,
-        and options for model levels and campaign storage.
+        and optional path to glade directory.
     """
     parser = argparse.ArgumentParser(description="get ERA5 sounding at time, lon, lat")
-    parser.add_argument("--time", help="time")
+    parser.add_argument("time", help="time")
     parser.add_argument(
         "--lon",
         type=lambda x: float(x) % 360 * units.degreeE,
@@ -33,17 +33,7 @@ def parse_args() -> argparse.Namespace:
         type=lambda x: float(x) * units.degreeN,
         help="latitude in degrees North",
     )
-    parser.add_argument(
-        "--model_levels", action="store_true", help="native model levels"
-    )
-    parser.add_argument("--campaign", action="store_true", help="use campaign storage")
     parser.add_argument("--glade", default="/", help="parent of glade directory")
-    parser.add_argument(
-        "--neighbors",
-        type=int,
-        default=1,
-        help="number of neighbors to average",
-    )
     args = parser.parse_args()
     logging.info(args)
     return args

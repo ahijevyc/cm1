@@ -159,7 +159,8 @@ def get(
         # Drop "utc_date" to avoid error about "Gregorian year" when quantifying
         # For some reason Gaussian "zero" is flipped for some latitudes in "SP" file.
         ds = xarray.open_mfdataset(local_files, drop_variables=["zero", "utc_date"])
-        logging.warning(f"opened {local_files}")
+        logging.warning(f"opened {len(local_files)} local files")
+        logging.info(local_files)
         logging.warning(f"selected {time}")
         ds = ds.sel(time=time)
         ds = ds.metpy.quantify()
@@ -283,7 +284,7 @@ def s3_era5_dataset(time: pd.Timestamp) -> xarray.Dataset:
         logging.warning(f"Downloaded and cached: {cache_file_path}")
 
     ds_pl = xarray.open_mfdataset(cache_file_paths).drop_vars("utc_date")
-    logging.warning(f"selecting {time} from ds_pl")
+    logging.info(f"selecting {time} from ds_pl")
     ds_pl = ds_pl.sel(time=time)
     ds_pl = ds_pl.metpy.quantify()
     ds_pl["P"] = ds_pl.level * ds_pl.level.metpy.units
