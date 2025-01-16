@@ -12,7 +12,7 @@ import s3fs
 import xarray
 from metpy.units import units
 
-from cm1.utils import TMPDIR
+from cm1.util import TMPDIR
 
 
 def compute_z_level(ds: xarray.Dataset, lev: int, z_h: float) -> Tuple[float, float]:
