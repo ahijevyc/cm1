@@ -16,7 +16,9 @@ class RunController:
         self.needLW = False
         self.needSW = False
         self.executable = "cm1.exe"
-
+        self.input_sounding = None
+        self.run_dir = None
+        self.name = None
 
 class FortranNamelistController:
     def __init__(self, file_path):
@@ -82,25 +84,3 @@ class FortranNamelistController:
         """
         f90nml.write(self.namelist, output_file, force=force)
         print(f"Namelist saved to {output_file}")
-
-
-# Example usage
-if __name__ == "__main__":
-    # Initialize the controller with the path to the namelist file
-    controller = FortranNamelistController("input.nml")
-
-    # Get a value from the namelist
-    print("Initial value:", controller.get_value("physics", "timestep"))
-
-    # Modify a value in the namelist
-    controller.set_value("physics", "timestep", 300)
-
-    # Add a new group and variable
-    controller.add_group("new_group")
-    controller.add_variable("new_group", "new_var", 42)
-
-    # Delete a variable
-    controller.delete_variable("physics", "old_variable")
-
-    # Save the updated namelist
-    controller.save("updated_input.nml")

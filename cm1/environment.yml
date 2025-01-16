@@ -4,6 +4,7 @@ channels:
   - defaults
   - r
 dependencies:
+  - f90nml
   - pandas
   - s3fs
   - xarray
