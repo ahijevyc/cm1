@@ -227,14 +227,17 @@ def read_from_txt(file_path):
     P = []  # pressure array
 
     for level in ds.level:
+        # TODO: Add effect of water vapor. Water vapor lowers the density of air given the same temperature.
+        # Find the virtual temperature, the temperature of dry air with the same density as moist air. 
         T = mcalc.temperature_from_potential_temperature(
             p_bot, ds.theta.sel(level=level)
         )
+        Tv = mcalc.thermo.virtual_temperature(T, ds.Q.sel(level=level))
         dz = ds.Z.sel(level=level) - z_bot
-        p_bot = p_bot * np.exp(-metpy.constants.g * dz / metpy.constants.Rd / T)
+        p_bot = p_bot * np.exp(-metpy.constants.g * dz / metpy.constants.Rd / Tv)
         if p_bot < 0 * units.hPa:
             logging.error(
-                f"{file_path} p_bot<0 {p_bot:~} dz {dz:~} T {T:~}. set to 0 hPa"
+                f"{file_path} p_bot<0 {p_bot:~} dz {dz:~} Tv {Tv:~}. set to 0 hPa"
             )
             p_bot = 0.0 * units.hPa
         P.append(p_bot.item().m_as(ds.SP.metpy.units))
