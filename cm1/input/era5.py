@@ -68,17 +68,15 @@ def compute_z_level(ds: xarray.Dataset, lev: int, z_h: float) -> Tuple[float, fl
         #    alphaIFS.load(), alpha.load(), atol=1e-2
         # ), f"{np.abs((alphaIFS-alpha)).max()}"
 
-    t_level = t_level * metpy.constants.Rd
-
     # Calculate the full-level geopotential `z_f`
     # Integrate from previous (lower) half-level `z_h` to the
     # full level
-    z_f = z_h + (t_level * alpha)
+    z_f = z_h + (t_level * metpy.constants.Rd * alpha)
     z_f = z_f.drop_vars("half_level")
     z_f = z_f.assign_coords(level=lev)
 
     # Update the half-level geopotential `z_h`
-    z_h = z_h + (t_level * dlog_p)
+    z_h = z_h + (t_level * metpy.constants.Rd * dlog_p)
     z_h = z_h.assign_coords(half_level=lev).drop_vars("level")
 
     return z_h, z_f

@@ -1,7 +1,6 @@
 Requirements
 * access to [NCAR HPC Campaign Storage](https://ncar-hpc-docs.readthedocs.io/en/latest/storage-systems/glade/campaign/) `/glade/campaign/`
 * Install Python modules in `environment.yml`
-* Install cm1 for input/sounding and skewt
 
 Get ERA5 sounding for CM1.
 ```csh

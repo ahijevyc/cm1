@@ -19,25 +19,21 @@ For more information, please read these [answers to frequently asked questions](
 
 ## Documentation
   
-<details>
-  <summary>About CM1</summary>
+<summary>About CM1</summary>
 
 - [Parallel Performance](doc/pp.md)
 - [The governing equations for CM1](doc/cm1_equations.pdf)  **(Last updated:  21 October 2021)**
 - [Acknowledgments](doc/ACKNOWLEDGMENTS).
 - [Answers to frequently asked questions](doc/faq.md) about CM1.
 - [presentation on CM1 parallelization](doc/cm1_parallelization.pdf) (pdf)  (From presentation at NCSA, December 2009)
-</details>
 
-<details>
-  <summary>Helpful Information for New Users of CM1</summary>
+<summary>Helpful Information for New Users of CM1</summary>
 
 - [A brief summary of how to run cm1](doc/README.md)
 - [README.namelist](README.namelist) -- explains the various settings in the namelist.input file.
 - [Pre-configured namelist.input files](run/config_files)
 - [Soundings for idealized simulations](soundings)
 - [Sample submission scripts for NCAR's supercomputers](scripts)
-</details>
 
 <details>
   <summary>Other Information about CM1</summary>

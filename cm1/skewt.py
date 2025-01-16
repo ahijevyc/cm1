@@ -27,7 +27,7 @@ from pint import Quantity
 
 import cm1.input.era5
 from cm1.input.sounding import get_ofile
-from cm1.utils import era5_circle_neighborhood, parse_args
+from cm1.utils import parse_args
 
 
 def main() -> None:
@@ -237,9 +237,7 @@ def skewt(
     # Parcel virtual temperature
     skew.plot(p, profTv, "k", linewidth=1.5, linestyle="dashed")
 
-    # TODO: get working with CM1 test soundings
-    sfcape, sfcin = None, None
-    # sfcape, sfcin = mpcalc.cape_cin(p, Tv, Td, profTv)
+    sfcape, sfcin = mpcalc.cape_cin(p, Tv, Td, profTv)
     # Shade areas of CAPE and CIN
     skew.shade_cin(p, Tv, profTv)
     skew.shade_cape(p, Tv, profTv)
@@ -292,7 +290,6 @@ def skewt(
         height, u, v, 3 * units.km, storm_u=storm_u, storm_v=storm_v
     )
 
-    title += f"\nhodograph, wind barb in {plot_barbs_units} {barb_increments}"
     title += f"storm_u={storm_u:~.1f}   storm_v={storm_v:~.1f}"
     title += f"\n0-3km srh+={srh03_pos:~.0f}   srh-={srh03_neg:~.0f}   srh(tot)={srh03_tot:~.0f}"
 
@@ -318,13 +315,24 @@ def skewt(
         xloc=1.05,
         barb_increments=barb_increments,
     )
+    skew.ax.text(
+        1.07,
+        0,
+        f"{plot_barbs_units}", #\n{barb_increments}",
+        va="top",
+        ha="right",
+        transform=skew.ax.transAxes,
+        fontsize="xx-small",
+    )
 
     logging.info("Create hodograph")
     ax_hod = inset_axes(skew.ax, "40%", "40%", loc=1)
     h = Hodograph(ax_hod, component_range=30.0)
     h.add_grid(increment=10, linewidth=0.75)
-    ax_hod.set_xlabel("")
+    # ax_hod.set_xlabel("")
     ax_hod.set_ylabel("")
+    ax_hod.xaxis.label.set_fontsize("xx-small")
+    ax_hod.tick_params(axis="both", which="major", labelsize="xx-small")
 
     # Label AGL intervals in hodograph.
     for label_hgt in label_hgts:
