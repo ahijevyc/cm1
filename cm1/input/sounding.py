@@ -17,14 +17,14 @@ from metpy.units import units
 from pint import Quantity
 
 import cm1.input.era5
-from cm1.util import TMPDIR, era5_circle_neighborhood, parse_args
+from cm1.util import TMPDIR, parse_args
 
 # Assuming this script is located in a subdirectory of the repository
 repo_base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 soundings_path = os.path.join(repo_base_path, "soundings")
 
 
-def era5(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwargs):
+def era5_aws(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwargs):
     """
     Retrieve ERA5 dataset for a specific time and location.
 
@@ -37,7 +37,7 @@ def era5(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwargs):
     Returns:
         xarray.Dataset: ERA5 dataset for the specified time and nearest location.
     """
-    ds = cm1.input.era5.get(time, **kwargs)
+    ds = cm1.input.era5.aws(time, **kwargs)
     ds = ds.sel(
         longitude=lon,
         latitude=lat,
@@ -47,84 +47,50 @@ def era5(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwargs):
     return ds
 
 
-def era5_nearest_grid_neighbors(dataset: xarray.Dataset, lat: Quantity, lon: Quantity):
+def era5_model_level(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwargs):
     """
-    Find the nearest grid point and its immediate neighbors in a dataset with latitude and longitude coordinates.
-    Handles longitude wrapping for east and west neighbors, and supports latitude coordinates increasing from north to south.
+    Retrieve ERA5 dataset for a specific time and location.
 
     Parameters:
-        dataset (xarray.Dataset): ERA5 dataset.
-        lat (float): The target latitude.
-        lon (float): The target longitude.
+        time (pd.Timestamp): The time for the dataset retrieval.
+        lat (float): Latitude of the desired location.
+        lon (float): Longitude of the desired location.
         **kwargs: Additional arguments to pass to the data retrieval function.
 
     Returns:
-        dict: A dictionary with:
-              - 'G': The nearest grid point as {"latitude": lat_idx, "longitude": lon_idx}.
-              - 'north': The grid point immediately north of G.
-              - 'south': The grid point immediately south of G.
-              - 'west': The grid point immediately west of G.
-              - 'east': The grid point immediately east of G.
-              If a neighbor is not available (e.g., at the boundary), it is set to None.
+        xarray.Dataset: ERA5 dataset for the specified time and nearest location.
     """
-
-    # Ensure the dataset has latitude and longitude coordinates
-    if "latitude" not in dataset.coords or "longitude" not in dataset.coords:
-        raise ValueError("Dataset must contain 'latitude' and 'longitude' coordinates.")
-
-    # Check if latitude is increasing from north to south
-    lat_increasing = dataset.latitude[1] < dataset.latitude[0]
-
-    center = dataset.sel(latitude=lat, longitude=lon, method="nearest")
-    # Find the index of the nearest grid point
-    nearest_idx = (
-        np.abs(dataset.latitude - center.latitude).argmin().item(),
-        np.abs(dataset.longitude - center.longitude).argmin().item(),
+    ds = cm1.input.era5.model_level(time, **kwargs)
+    ds = ds.sel(
+        longitude=lon,
+        latitude=lat,
+        method="nearest",
     )
-    lat_idx, lon_idx = nearest_idx
 
-    # Define neighbors
-    if lat_increasing:
-        # Latitude increasing from north to south
-        north = (
-            {"latitude": lat_idx - 1, "longitude": lon_idx}
-            if lat_idx - 1 >= 0
-            else None
-        )
-        south = (
-            {"latitude": lat_idx + 1, "longitude": lon_idx}
-            if lat_idx + 1 < dataset.latitude.size
-            else None
-        )
-    else:
-        # Latitude increasing from south to north
-        north = (
-            {"latitude": lat_idx + 1, "longitude": lon_idx}
-            if lat_idx + 1 < dataset.latitude.size
-            else None
-        )
-        south = (
-            {"latitude": lat_idx - 1, "longitude": lon_idx}
-            if lat_idx - 1 >= 0
-            else None
-        )
+    return ds
 
-    # Handle longitude wrapping
-    lon_size = dataset.longitude.size
-    west_idx = (lon_idx - 1) % lon_size
-    east_idx = (lon_idx + 1) % lon_size
 
-    west = {"latitude": lat_idx, "longitude": west_idx}
-    east = {"latitude": lat_idx, "longitude": east_idx}
+def era5_pressure_level(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwargs):
+    """
+    Retrieve ERA5 dataset for a specific time and location.
 
-    # Return the dictionary of results
-    return {
-        "G": {"latitude": lat_idx, "longitude": lon_idx},
-        "north": north,
-        "south": south,
-        "west": west,
-        "east": east,
-    }
+    Parameters:
+        time (pd.Timestamp): The time for the dataset retrieval.
+        lat (float): Latitude of the desired location.
+        lon (float): Longitude of the desired location.
+        **kwargs: Additional arguments to pass to the data retrieval function.
+
+    Returns:
+        xarray.Dataset: ERA5 dataset for the specified time and nearest location.
+    """
+    ds = cm1.input.era5.pressure_level(time, **kwargs)
+    ds = ds.sel(
+        longitude=lon,
+        latitude=lat,
+        method="nearest",
+    )
+
+    return ds
 
 
 def get_ofile(args):
@@ -278,7 +244,7 @@ def main() -> None:
         with open(ofile, "rb") as file:
             ds = pickle.load(file)
     else:
-        ds = cm1.input.era5.get(
+        ds = cm1.input.era5.model_level(
             valid_time,
             glade=args.glade,
         )
@@ -286,7 +252,7 @@ def main() -> None:
             logging.warning(f"pickle dump {ofile}")
             pickle.dump(ds, file)
 
-    ds = era5(valid_time, args.lat, args.lon)
+    ds = era5_model_level(valid_time, args.lat, args.lon)
 
     print(to_txt(ds))
 
