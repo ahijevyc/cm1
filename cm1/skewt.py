@@ -102,9 +102,10 @@ def skewt(
     # Validate required variables in dataset
     assert "Zsfc" in ds, "skewt needs geopotential height at the surface Zsfc"
     assert "SP" in ds, "skewt needs surface pressure SP"
-    # Avoid plot_colormapped KeyError: 'Indexing with a boolean dask array is not allowed.
+    # Load Dataset to avoid 
+    # plot_colormapped KeyError: 'Indexing with a boolean dask array is not allowed.
     # and allow .where function to check condition
-    logging.warning("load dataset")
+    logging.info("load dataset")
     ds = ds.load()
     old_nlevel = ds.level.size
     # Drop low pressure model levels to avoid
@@ -115,7 +116,7 @@ def skewt(
     ds = xarray.Dataset(
         {
             var: (
-                ds[var].where(ds.P >= ptop, drop=True)
+                ds[var].where(ds.P >= 10 * units.hPa, drop=True)
                 if "level" in ds[var].dims
                 else ds[var]
             )
@@ -132,8 +133,7 @@ def skewt(
     height = ds["Z"]
     p = ds["P"]
     t = ds["T"]
-    e = mpcalc.vapor_pressure(p, ds.Q)
-    Td = mpcalc.dewpoint(e)
+    Td = mpcalc.dewpoint(mpcalc.vapor_pressure(p, ds.Q))
     if any(Td > t):
         logging.warning("some Td > T")
 
@@ -145,10 +145,6 @@ def skewt(
     u = ds.U.metpy.convert_units(plot_barbs_units)
     v = ds.V.metpy.convert_units(plot_barbs_units)
 
-    # Find the level label with the maximum pressure.
-    # I used to use the level with the highest numeric value. This worked for ERA5 but not CM1 input soundings.
-    sfc = ds.level.sel(level=ds.P.idxmax())
-    logging.info(f"surface pressure {ds.P.sel(level=sfc).item():~}")
     skew = SkewT(fig, subplot=subplot, rotation=rotation)
     # Add the relevant special lines
     skew.plot_dry_adiabats(lw=0.75, alpha=0.5)
@@ -157,10 +153,24 @@ def skewt(
     # Slanted line on 0 isotherm
     skew.ax.axvline(0, color="c", linestyle="--", linewidth=2, alpha=0.5)
 
-    # Calculate LCL pressure and label it on SkewT.
-    lcl_pressure, lcl_temperature = mpcalc.lcl(
-        p.sel(level=sfc), t.sel(level=sfc), Td.sel(level=sfc)
+    # If there is no explicit "surface_potential_temperature" and/or "surface_mixing_ratio"
+    # DataArray, assume the value(s) of the level with the highest pressure.
+    parcel_level = ds.level.sel(level=ds.P.compute().idxmax())
+    if "surface_potential_temperature" in ds:
+        t_parcel = mpcalc.temperature_from_potential_temperature(ds.SP, ds.surface_potential_temperature)
+    else:
+        t_parcel = ds.T.sel(level=parcel_level)
+    if "surface_mixing_ratio" in ds:
+        q_parcel = ds.surface_mixing_ratio
+    else:
+        q_parcel = ds.Q.sel(level=parcel_level)
+    Td_parcel = mpcalc.dewpoint(mpcalc.vapor_pressure(ds.SP, q_parcel))
+    logging.info(
+        f"p_parcel {ds.SP.item():~} t_parcel {t_parcel.item():~} "
+        f"Td_parcel {Td_parcel.item():~} q_parcel {q_parcel.item():~}"
     )
+    # Calculate LCL pressure and label it on SkewT.
+    lcl_pressure, lcl_temperature = mpcalc.lcl(ds.SP, t_parcel, Td_parcel)
     logging.info(f"lcl_p {lcl_pressure:~} lcl_t {lcl_temperature:~}")
 
     trans = transforms.blended_transform_factory(skew.ax.transAxes, skew.ax.transData)
@@ -186,7 +196,7 @@ def skewt(
         # Averaging temperature, pressure, and mixing ratio along levels can
         # make mixing ratio above saturation, making LCL below profile.
         # Don't bother adding lcl_pressure point in that case.
-        logging.warning(f"lcl outside range of p {p.min()} {p.max()}")
+        logging.warning(f"lcl outside range of p {p.min().item()} {p.max().item()}")
         p = p.data  # convert to Quantity array (with units) so we can sort it
     # Create reverse sorted array of pressure. mpcalc assumes bottom-up arrays.
     p = np.sort(p)[::-1]
@@ -200,23 +210,6 @@ def skewt(
         v,
         height,
         Tv,
-    )
-    # T and Td were already turned from DataArrays into simple Quantity arrays
-    # so you can't use .sel method here. That's why I use t[0] instead of t.sel(level=sfc).
-    t_parcel = t[0]
-    Td_parcel = Td[0]
-    q_parcel = mpcalc.mixing_ratio(mpcalc.saturation_vapor_pressure(Td_parcel), ds.SP)
-    # Use surface values for parcel if the Dataset has them
-    if "surface_potential_temperature" in ds:
-        t_parcel = mpcalc.temperature_from_potential_temperature(
-            ds.SP, ds.surface_potential_temperature
-        )
-    if "surface_mixing_ratio" in ds:
-        q_parcel = ds.surface_mixing_ratio
-        e = mpcalc.vapor_pressure(ds.SP, q_parcel)
-        Td_parcel = mpcalc.dewpoint(e)
-    logging.info(
-        f"t_parcel {t_parcel.item():~} Td_parcel {Td_parcel.item():~} q_parcel {q_parcel.item():~}"
     )
     prof = mpcalc.parcel_profile(p, t_parcel, Td_parcel)
     prof_mixing_ratio = mpcalc.mixing_ratio_from_relative_humidity(
