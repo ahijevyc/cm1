@@ -114,7 +114,7 @@ cat<<END>$pbsjob
 
 
 # queue:
-#PBS -q main
+#PBS -q main@desched1
 
 
 #-------------------------------------------
