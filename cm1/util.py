@@ -24,12 +24,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="get ERA5 sounding at time, lon, lat")
     parser.add_argument("time", help="time")
     parser.add_argument(
-        "--lon",
+        "lon",
         type=lambda x: float(x) % 360 * units.degreeE,
         help="longitude in degrees East",
     )
     parser.add_argument(
-        "--lat",
+        "lat",
         type=lambda x: float(x) * units.degreeN,
         help="latitude in degrees North",
     )
