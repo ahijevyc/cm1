@@ -9,10 +9,96 @@ import numpy as np
 import pandas as pd
 import s3fs
 import xarray
+from matplotlib import pyplot as plt
 from metpy.units import units
 from pint import Quantity
+from sklearn.neighbors import BallTree
 
-from cm1.util import TMPDIR
+from cm1.utils import TMPDIR, mean_lat_lon
+
+
+def circle_neighborhood(ds, lat, lon, neighbors, debug=True):
+    """
+    mean in neighborhood of
+    of lat, lon
+    Average args.neighbor points.
+    """
+    if neighbors > 100:
+        logging.warning(
+            f"averaging {neighbors} neighbors along model levels may result in averaging between wildly different pressures and heights"
+        )
+    # indexing="ij" allows Dataset.stack dims order to be "latitude", "longitude"
+    lat2d, lon2d = np.meshgrid(ds.latitude, ds.longitude, indexing="ij")
+    latlon = np.deg2rad(np.vstack([lat2d.ravel(), lon2d.ravel()]).T)
+    X = [[lat.m_as("radian"), lon.m_as("radian")]]
+
+    (idx,) = BallTree(latlon, metric="haversine").query(
+        X, return_distance=False, k=neighbors
+    )
+    ds = ds.stack(z=("latitude", "longitude")).isel(z=idx).load()
+    lat_mean, lon_mean = mean_lat_lon(ds.latitude, ds.longitude)
+    sfc_pressure_range = ds.SP.max() - ds.SP.min()
+    if sfc_pressure_range > 1 * units.hPa:
+        logging.warning(f"sfc_pressure_range: {sfc_pressure_range:~}")
+    sfc_height_range = ds.Zsfc.max() - ds.Zsfc.min()
+    if sfc_height_range > 10 * units.m:
+        logging.warning(f"sfc_height_range: {sfc_height_range:~}")
+
+    # Plot requested sounding location and nearest neighbors used for averaging.
+    if debug:
+        logging.warning(f"plotting {lat_mean} {lon_mean}")
+        import cartopy.crs as ccrs
+        import cartopy.feature as cfeature
+
+        fig, ax = plt.subplots(
+            figsize=(10, 5),
+            subplot_kw={
+                "projection": ccrs.PlateCarree(central_longitude=lon_mean.data)
+            },
+        )
+
+        # Add features to the map
+        ax.add_feature(cfeature.COASTLINE)
+        ax.add_feature(cfeature.BORDERS, linestyle=":")
+        ax.add_feature(cfeature.LAND, edgecolor="black")
+        ax.add_feature(cfeature.OCEAN)
+
+        # Plot the points
+        ax.plot(
+            lon_mean,
+            lat_mean,
+            marker="o",
+            transform=ccrs.PlateCarree(),
+            label="mean",
+            linestyle="none",
+        )
+        ax.plot(
+            lon.m_as("degrees_E"),
+            lat.m_as("degrees_N"),
+            marker=".",
+            transform=ccrs.PlateCarree(),
+            label="request",
+            linestyle="none",
+        )
+        ax.scatter(ds.longitude, ds.latitude, marker=".", transform=ccrs.PlateCarree())
+        ax.set_title(f"{lat_mean.data} {lon_mean.data}")
+        ax.gridlines(draw_labels=True)
+        ax.legend()
+        plt.show()
+        # TODO: remove assertions after function is bug-free
+        # assert mean location is close to what was requested.
+        assert abs(lat_mean - lat) < 1, f"meanlat {lat_mean} lat {lat}"
+        assert (
+            np.cos(np.radians(lon_mean)) - np.cos(np.radians(lon))
+        ) < 0.01, f"meanlon {lon_mean} lon {lon} {np.cos(np.radians(lon_mean)) - np.cos(np.radians(lon))}"
+        assert (
+            np.sin(np.radians(lon_mean)) - np.sin(np.radians(lon))
+        ) < 0.01, f"meanlon {lon_mean} lon {lon} {np.sin(np.radians(lon_mean)) - np.sin(np.radians(lon))}"
+
+    ds = ds.mean(dim="z")  # drop `z` `latitude` `longitude` dimensions
+    ds = ds.assign_coords(latitude=lat_mean, longitude=lon_mean)
+    ds.attrs["neighbors"] = neighbors
+    return ds
 
 
 def compute_z_level(ds: xarray.Dataset, lev: int, z_h: float) -> Tuple[float, float]:
@@ -345,7 +431,9 @@ def pressure_level(
             "128_168_2d.ll025sc",
         ],
         pd.Timestamp(f"{time.strftime('%Y-%m')}-01 00:00:00"),
-        pd.Timestamp(f"{time.strftime('%Y-%m')}-{lastdayofmonth.strftime('%d')} 23:00:00"),
+        pd.Timestamp(
+            f"{time.strftime('%Y-%m')}-{lastdayofmonth.strftime('%d')} 23:00:00"
+        ),
     )
 
     ds_sfc["surface_potential_temperature"] = mcalc.potential_temperature(
@@ -405,7 +493,8 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
             s3 = s3fs.S3FileSystem(anon=True)
 
         s3_file_path = (
-            S3_BUCKET + f"/e5.oper.an.{level_type}/{time.year}{time.month:02d}/{file_name}"
+            S3_BUCKET
+            + f"/e5.oper.an.{level_type}/{time.year}{time.month:02d}/{file_name}"
         )
         if not s3.exists(s3_file_path):
             raise FileNotFoundError(f"{s3_file_path} not found in S3 bucket")

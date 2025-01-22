@@ -17,7 +17,7 @@ from metpy.units import units
 from pint import Quantity
 
 import cm1.input.era5
-from cm1.util import TMPDIR, parse_args
+from cm1.utils import TMPDIR, parse_args
 
 # Assuming this script is located in a subdirectory of the repository
 repo_base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))

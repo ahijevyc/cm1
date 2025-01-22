@@ -27,7 +27,7 @@ from pint import Quantity
 
 import cm1.input.era5
 from cm1.input.sounding import get_ofile
-from cm1.util import parse_args
+from cm1.utils import parse_args
 
 
 def main() -> None:
