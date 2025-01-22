@@ -176,6 +176,7 @@ def get(
                     rdapath
                     / rdaindex
                     / "e5.oper.invariant/e5.oper.invariant.128_129_z.regn320sc.2016010100_2016010100.nc"
+
                 )
                 .squeeze()
                 .drop_vars(["utc_date", "time"])
@@ -213,6 +214,53 @@ def get(
     else:
         # If not local download from S3 bucket.
         ds = s3_era5_dataset(time)
+
+    return ds
+
+def get_invariant(
+    glade: Path = Path("/"),
+) -> xarray.Dataset:
+    """
+    Load invariant ERA5 dataset.
+
+    Parameters
+    ----------
+    glade : optional
+        Path to glade directory.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing invariant ERA5 data.
+    """
+    # get from campaign storage
+    rdapath = Path(glade) / "glade/campaign/collections/rda/data"
+
+    varnames = [
+        "026_cl",     "129_z",
+        "027_cvl",    "160_sdor",
+        "028_cvh",    "161_isor",
+        "029_tvl",    "162_anor",
+        "030_tvh",    "163_slor",
+        "043_slt",    "172_lsm",
+        "074_sdfor" ]
+
+    local_path = (
+        rdapath / "d633000/e5.oper.invariant/197901"
+    )
+
+    local_files = [
+        local_path / f"e5.oper.invariant.128_{varname}.ll025sc.1979010100_1979010100.nc"
+        for varname in varnames
+    ]
+
+    for local_file in local_files:
+        assert os.path.exists(local_file), f"Could not find {local_file}"
+
+    # Drop "utc_date" to avoid error about "Gregorian year" when quantifying
+    ds = xarray.open_mfdataset(local_files, drop_variables= "utc_date").squeeze(dim="time")
+    logging.warning(f"opened {len(local_files)} local files")
+    logging.info(local_files)
 
     return ds
 
@@ -293,6 +341,8 @@ def s3_era5_dataset(time: pd.Timestamp) -> xarray.Dataset:
     cache_file_paths = []
     for var in [
         "134_sp.ll025sc",
+        "165_10u.ll025sc",
+        "166_10v.ll025sc",
         "167_2t.ll025sc",
         "168_2d.ll025sc",
     ]:
