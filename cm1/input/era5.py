@@ -17,6 +17,59 @@ from sklearn.neighbors import BallTree
 from cm1.utils import TMPDIR, mean_lat_lon
 
 
+def campaign(
+    time: pd.Timestamp,
+    glade: Path,
+    rdaindex: str,
+    level_type: str,
+    varnames: list,
+    start_end_str: str,
+    drop_vars: list = ["utc_date"],
+) -> xarray.Dataset:
+    """
+    Load ERA5 dataset for specified time.
+
+    Parameters
+    ----------
+    time : pd.Timestamp
+        Desired timestamp for data retrieval.
+    glade : Path
+        Base path to the glade directory.
+    level_type : str
+        Type of ERA5 data (e.g., 'e5.oper.an.pl', 'e5.oper.an.sfc').
+    varnames : list
+        List of variable names to load.
+    start_end_str : str
+        start and end time part of filename
+    drop_vars : list, optional
+        List of variables to drop from the dataset (default is ["utc_date"]).
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing ERA5 data for the specified time and configuration.
+    """
+    rdapath = Path(glade) / "glade/campaign/collections/rda/data"
+
+    local_files = [
+        rdapath
+        / rdaindex
+        / level_type
+        / time.strftime("%Y%m")
+        / f"{level_type}.{varname}.{start_end_str}.nc"
+        for varname in varnames
+    ]
+
+    ds = xarray.open_mfdataset(local_files, drop_variables=drop_vars)
+    logging.warning(f"opened {len(local_files)} local {level_type} files")
+    logging.info(local_files)
+    logging.warning(f"selected {time}")
+    ds = ds.sel(time=time)
+    ds = ds.metpy.quantify()
+
+    return ds
+
+
 def circle_neighborhood(ds, lat, lon, neighbors, debug=True):
     """
     mean in neighborhood of
@@ -245,34 +298,28 @@ def model_level(
     """
     # get from campaign storage
     rdapath = Path(glade) / "glade/campaign/collections/rda/data"
+    rdaindex = "d633006"
 
-    rdaindex, level_type = "d633006", "ml"
-    varnames = [
-        "0_5_0_0_0_t.regn320sc",
-        "0_5_0_1_0_q.regn320sc",
-        "0_5_0_2_2_u.regn320uv",
-        "0_5_0_2_3_v.regn320uv",
-        "0_5_0_2_8_w.regn320sc",
-        "128_134_sp.regn320sc",
-    ]
     start_hour = time.floor("6h")
     end_hour = start_hour + pd.Timedelta(5, unit="hour")
+    start_end_str = f"{start_hour.strftime('%Y%m%d%H')}_{end_hour.strftime('%Y%m%d%H')}"
 
-    local_path = rdapath / rdaindex / f"e5.oper.an.{level_type}" / time.strftime("%Y%m")
-    start_end = f"{start_hour.strftime('%Y%m%d%H')}_{end_hour.strftime('%Y%m%d%H')}"
-
-    local_files = [
-        local_path / f"e5.oper.an.{level_type}.{varname}.{start_end}.nc"
-        for varname in varnames
-    ]
-
-    # Drop "utc_date" to avoid error about "Gregorian year" when quantifying
-    # For some reason Gaussian "zero" is flipped for some latitudes in "SP" file.
-    ds = xarray.open_mfdataset(local_files, drop_variables=["zero", "utc_date"])
-    logging.warning(f"opened {len(local_files)} local files")
-    logging.info(local_files)
-    logging.warning(f"selected {time}")
-    ds = ds.sel(time=time)
+    ds = campaign(
+        time,
+        glade,
+        rdaindex,
+        "e5.oper.an.ml",
+        [
+            "0_5_0_0_0_t.regn320sc",
+            "0_5_0_1_0_q.regn320sc",
+            "0_5_0_2_2_u.regn320uv",
+            "0_5_0_2_3_v.regn320uv",
+            "0_5_0_2_8_w.regn320sc",
+            "128_134_sp.regn320sc",
+        ],
+        start_end_str,
+        ["zero", "utc_date"],
+    )
     ds = ds.metpy.quantify()
 
     # Derive pressure from a and b coefficients
@@ -318,63 +365,6 @@ def model_level(
     return ds
 
 
-def load_era5_data_from_campaign(
-    time: pd.Timestamp,
-    glade: Path,
-    level_type: str,
-    varnames: list,
-    start: pd.Timestamp,
-    end: pd.Timestamp,
-    drop_vars: list = ["utc_date"],
-) -> xarray.Dataset:
-    """
-    Load ERA5 dataset for specified time and configuration.
-
-    Parameters
-    ----------
-    time : pd.Timestamp
-        Desired timestamp for data retrieval.
-    glade : Path
-        Base path to the glade directory.
-    level_type : str
-        Type of ERA5 data (e.g., 'e5.oper.an.pl', 'e5.oper.an.sfc').
-    varnames : list
-        List of variable names to load.
-    start : pd.Timestamp
-        Start for data retrieval.
-    end : pd.Timestamp
-        End for data retrieval.
-    drop_vars : list, optional
-        List of variables to drop from the dataset (default is ["utc_date"]).
-
-    Returns
-    -------
-    xarray.Dataset
-        Dataset containing ERA5 data for the specified time and configuration.
-    """
-    rdapath = Path(glade) / "glade/campaign/collections/rda/data"
-    rdaindex = "d633000"
-    start_end_str = f"{start.strftime('%Y%m%d%H')}_{end.strftime('%Y%m%d%H')}"
-
-    local_files = [
-        rdapath
-        / rdaindex
-        / level_type
-        / time.strftime("%Y%m")
-        / f"{level_type}.{varname}.{start_end_str}.nc"
-        for varname in varnames
-    ]
-
-    ds = xarray.open_mfdataset(local_files, drop_variables=drop_vars)
-    logging.warning(f"opened {len(local_files)} local {level_type} files")
-    logging.info(local_files)
-    logging.warning(f"selected {time}")
-    ds = ds.sel(time=time)
-    ds = ds.metpy.quantify()
-
-    return ds
-
-
 def pressure_level(
     time: pd.Timestamp,
     glade: Path = Path("/"),
@@ -394,12 +384,15 @@ def pressure_level(
     xarray.Dataset
         Dataset containing ERA5 data for the specified time and configuration.
     """
+    rdaindex = "d633000"
     start = time.floor("1d")
     end = start + pd.Timedelta(23, unit="hour")
+    start_end_str = f"{start.strftime('%Y%m%d%H')}_{end.strftime('%Y%m%d%H')}"
 
-    ds_pl = load_era5_data_from_campaign(
+    ds_pl = campaign(
         time,
         glade,
+        rdaindex,
         "e5.oper.an.pl",
         [
             "128_129_z.ll025sc",
@@ -409,18 +402,19 @@ def pressure_level(
             "128_133_q.ll025sc",
             "128_135_w.ll025sc",
         ],
-        start,
-        end,
+        start_end_str,
     )
 
     ds_pl["P"] = ds_pl.level * ds_pl.level.metpy.units
     ds_pl["Z"] /= metpy.constants.g
 
     lastdayofmonth = time + pd.offsets.MonthEnd(0)
+    start_end_str = f"{time.strftime('%Y%m')}0100_{time.strftime('%Y%m')}{lastdayofmonth.strftime('%d')}23"
 
-    ds_sfc = load_era5_data_from_campaign(
+    ds_sfc = campaign(
         time,
         glade,
+        rdaindex,
         "e5.oper.an.sfc",
         [
             "128_134_sp.ll025sc",
@@ -430,10 +424,7 @@ def pressure_level(
             "128_167_2t.ll025sc",
             "128_168_2d.ll025sc",
         ],
-        pd.Timestamp(f"{time.strftime('%Y-%m')}-01 00:00:00"),
-        pd.Timestamp(
-            f"{time.strftime('%Y-%m')}-{lastdayofmonth.strftime('%d')} 23:00:00"
-        ),
+        start_end_str,
     )
 
     ds_sfc["surface_potential_temperature"] = mcalc.potential_temperature(
