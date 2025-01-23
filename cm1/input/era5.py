@@ -61,11 +61,10 @@ def campaign(
     ]
 
     ds = xarray.open_mfdataset(local_files, drop_variables=drop_vars)
-    logging.warning(f"opened {len(local_files)} local {level_type} files")
-    logging.info(local_files)
-    logging.warning(f"selected {time}")
+    logging.info(f"opened {len(local_files)} local {level_type} files")
+    logging.debug(local_files)
+    logging.info(f"selected {time}")
     ds = ds.sel(time=time)
-    ds = ds.metpy.quantify()
 
     return ds
 
@@ -243,38 +242,34 @@ def invariant(
     xarray.Dataset
         Dataset containing invariant ERA5 data.
     """
-    # get from campaign storage
-    rdapath = Path(glade) / "glade/campaign/collections/rda/data"
 
+    rdaindex = "d633000"
     varnames = [
-        "026_cl",
-        "129_z",
-        "027_cvl",
-        "160_sdor",
-        "028_cvh",
-        "161_isor",
-        "029_tvl",
-        "162_anor",
-        "030_tvh",
-        "163_slor",
-        "043_slt",
-        "172_lsm",
-        "074_sdfor",
+        "128_026_cl.ll025sc",
+        "128_129_z.ll025sc",
+        "128_027_cvl.ll025sc",
+        "128_160_sdor.ll025sc",
+        "128_028_cvh.ll025sc",
+        "128_161_isor.ll025sc",
+        "128_029_tvl.ll025sc",
+        "128_162_anor.ll025sc",
+        "128_030_tvh.ll025sc",
+        "128_163_slor.ll025sc",
+        "128_043_slt.ll025sc",
+        "128_172_lsm.ll025sc",
+        "128_074_sdfor.ll025sc",
+        "228_007_dl.ll025sc",
     ]
+    ds = campaign(
+        pd.to_datetime("19790101"),
+        glade,
+        rdaindex,
+        "e5.oper.invariant",
+        varnames,
+        "1979010100_1979010100",
+    )
 
-    local_path = rdapath / "d633000" / "e5.oper.invariant" / "197901"
-
-    local_files = [
-        local_path / f"e5.oper.invariant.128_{varname}.ll025sc.1979010100_1979010100.nc"
-        for varname in varnames
-    ]
-
-    # Drop "utc_date" to avoid error about "Gregorian year" when quantifying
-    ds = xarray.open_mfdataset(local_files, drop_variables="utc_date")
-    ds = ds.squeeze(dim="time")
     ds = ds.drop_vars("time")
-    logging.warning(f"opened {len(local_files)} local files")
-    logging.info(local_files)
 
     return ds
 
@@ -405,6 +400,7 @@ def pressure_level(
         start_end_str,
     )
 
+    ds_pl = ds_pl.metpy.quantify()
     ds_pl["P"] = ds_pl.level * ds_pl.level.metpy.units
     ds_pl["Z"] /= metpy.constants.g
 
@@ -427,6 +423,7 @@ def pressure_level(
         start_end_str,
     )
 
+    ds_sfc = ds_sfc.metpy.quantify()
     ds_sfc["surface_potential_temperature"] = mcalc.potential_temperature(
         ds_sfc.SP,
         ds_sfc.VAR_2T,
