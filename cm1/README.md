@@ -3,10 +3,9 @@ Requirements
 * Install Python modules in `environment.yml`
 
 Get ERA5 sounding for CM1.
+
 ```csh
-python input/sounding.py 20240518T18 \
-             --lat 35.0 \
-             --lon -97.5 \
+python input/sounding.py 20240518T18 -97.5 35
 ```
 
 Expected output
@@ -26,9 +25,7 @@ Expected output
 Plot a skew-T diagram.
 
 ```csh
-python skewt.py 20240518T18 \
-                --lat 35.0 \
-                --lon -97.5 \
+python skewt.py 20240518T18 -97.5 35
 ```
 
 Expected output
