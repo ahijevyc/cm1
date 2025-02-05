@@ -53,6 +53,10 @@ class CM1Run:
 # queue (works from derecho or casper)
 #PBS -q main@desched1
 
+# Write STDOUT and STDERR to run directory.
+#PBS -o {self.pbs.run_dir}
+#PBS -e {self.pbs.run_dir}
+
 #-------------------------------------------
 
 # temporary directory
