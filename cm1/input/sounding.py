@@ -38,10 +38,13 @@ def era5_aws(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwargs):
         xarray.Dataset: ERA5 dataset for the specified time and nearest location.
     """
     ds = cm1.input.era5.aws(time, **kwargs)
+    # map negative longitude to 0-360 degreeE
+    lon = lon % (360 * units.degreeE)
     ds = ds.sel(
         longitude=lon,
         latitude=lat,
         method="nearest",
+        tolerance=5*units.deg,
     )
 
     return ds
@@ -61,11 +64,14 @@ def era5_model_level(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwargs)
         xarray.Dataset: ERA5 dataset for the specified time and nearest location.
     """
     ds = cm1.input.era5.model_level(time, **kwargs)
+    # map negative longitude to 0-360 degreeE
+    lon = lon % (360 * units.degreeE)
     ds = ds.sel(
         longitude=lon,
         latitude=lat,
         method="nearest",
-    )
+        tolerance=5*units.deg,
+)
 
     return ds
 
@@ -84,10 +90,13 @@ def era5_pressure_level(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwar
         xarray.Dataset: ERA5 dataset for the specified time and nearest location.
     """
     ds = cm1.input.era5.pressure_level(time, **kwargs)
+    # map negative longitude to 0-360 degreeE
+    lon = lon % (360 * units.degreeE)
     ds = ds.sel(
         longitude=lon,
         latitude=lat,
         method="nearest",
+        tolerance=5*units.deg,
     )
 
     return ds

@@ -581,6 +581,8 @@ def nearest_grid_neighbors(dataset: xarray.Dataset, lat: Quantity, lon: Quantity
               - 'east': The grid point immediately east of G.
               If a neighbor is not available (e.g., at the boundary), it is set to None.
     """
+    # map negative longitude to 0-360 degreeE
+    lon = lon % (360 * units.degreeE)
 
     # Ensure the dataset has latitude and longitude coordinates
     if "latitude" not in dataset.coords or "longitude" not in dataset.coords:

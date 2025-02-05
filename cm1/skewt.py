@@ -241,7 +241,7 @@ def skewt(
 
     title = ""
     if "time" in ds:
-        title += f"{ds.time.data} "
+        title += f"{ds.time.dt.strftime('%Y-%m-%d %H:%M:%S').item()} "
     if "longitude" in ds:
         title += f"{ds.longitude.item():.3f} {ds.latitude.item():.3f}"
     if sfcape is not None:
