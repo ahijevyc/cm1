@@ -8,8 +8,8 @@
 #              (NOTE: Don't change lines 3 and 4!)
 #  Note:  you may need to remove -DNCFPLUS if you use an old version of netcdf
 #
-OUTPUTINC = -I$(NETCDF)/include
-OUTPUTLIB = -L$(NETCDF)/lib
+OUTPUTINC = -I$(NETCDF)/include -I/opt/homebrew/Cellar/netcdf-fortran/4.6.1_1/include
+OUTPUTLIB = -L$(NETCDF)/lib -L/opt/homebrew/Cellar/netcdf-fortran/4.6.1_1/lib
 OUTPUTOPT = -DNETCDF -DNCFPLUS
 LINKOPTS  = -lnetcdf -lnetcdff
 #-----------------------------------------------------------------------------
@@ -28,10 +28,10 @@ LINKOPTS  = -lnetcdf -lnetcdff
 #-----------------------------------------------------------------------------
 #  multiple processors, distributed memory (MPI), Intel compiler 
 #      (default for NCAR's derecho)
-FC   = mpif90
-OPTS = -O3 -ip -assume byterecl -fp-model precise -ftz -no-fma
-CPP  = cpp -C -P -traditional -Wno-invalid-pp-token -ffreestanding
-DM   = -DMPI
+#FC   = mpif90
+#OPTS = -O3 -ip -assume byterecl -fp-model precise -ftz -no-fma
+#CPP  = cpp -C -P -traditional -Wno-invalid-pp-token -ffreestanding
+#DM   = -DMPI
 #-----------------------------------------------------------------------------
 #  multiple processors, shared memory (OpenMP), Intel compiler 
 #      (can be used for NCAR's derecho)
@@ -76,10 +76,10 @@ DM   = -DMPI
 #DM = -DMPI
 #-----------------------------------------------------------------------------
 #  multiple processors, shared memory (OpenMP), GNU compiler
-#FC   = gfortran
-#OPTS = -ffree-form -ffree-line-length-none -O2 -finline-functions -fopenmp
-#CPP  = cpp -C -P -traditional -Wno-invalid-pp-token -ffreestanding
-#OMP  = -DOPENMP
+FC   = gfortran-mp-12
+OPTS = -ffree-form -ffree-line-length-none -O2 -finline-functions -fopenmp
+CPP  = cpp -C -P -traditional -Wno-invalid-pp-token -ffreestanding
+OMP  = -DOPENMP
 #-----------------------------------------------------------------------------
 #  single processor, Cray fortran compiler
 #FC   = ftn
@@ -205,7 +205,7 @@ AR      = ar cru
 all : cm1
 
 cm1:			$(OBJS)
-			$(FC) $(OBJS) $(FFLAGS) $(OUTPUTINC) $(OUTPUTLIB) $(LINKOPTS) -o ../run/cm1.exe
+			$(FC) $(OBJS) $(FFLAGS) $(OUTPUTINC) $(OUTPUTLIB) $(LINKOPTS) -o ../run/cm1.exe -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
 			$(AR) onefile.F $(SRC)
 			mv onefile.F ../run
 
