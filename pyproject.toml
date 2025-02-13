@@ -10,14 +10,17 @@ readme = "README.md"
 license = {file = "LICENSE.txt"}
 version = "21.1"
 dependencies = [
-    "pandas",
-    "s3fs",
-    "xarray",
-    "ipython",
-    "ipykernel",
-    "h5netcdf",
     "cftime",
     "dask",
+    "f90nml",
+    "h5netcdf",
+    "ipython",
+    "ipykernel",
+    "metpy",
+    "pandas",
+    "s3fs",
+    "scikit-learn",
+    "xarray",
 ]
 classifiers = [
                "Intended Audience :: Science/Research",
