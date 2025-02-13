@@ -94,6 +94,7 @@ def skewt(
     subplot: Optional[Tuple[int, int, int]] = None,
     rotation: int = 40,
     ptop: Quantity = 100 * units.hPa,
+    xlim: Optional[Tuple[float, float]] = (-40, 55),
 ) -> SkewT:
     """
     Generates a Skew-T diagram with temperature, dewpoint, wind barbs, CAPE, CIN,
@@ -157,12 +158,12 @@ def skewt(
     height = ds["Z"]
     p = ds["P"]
     t = ds["T"]
-    Td = mpcalc.dewpoint(mpcalc.vapor_pressure(p, ds.Q))
+    Td = mpcalc.dewpoint_from_specific_humidity(p, ds.Q)
     if any(Td > t):
         logging.warning("some Td > T")
 
     if "Tv" not in ds:
-        ds["Tv"] = mpcalc.thermo.virtual_temperature(ds.T, ds.Q)
+        ds["Tv"] = mpcalc.thermo.virtual_temperature(ds.T, mpcalc.mixing_ratio_from_specific_humidity(ds.Q))
     Tv = ds["Tv"]
     barb_increments = {"flag": 25, "full": 5, "half": 2.5}
     plot_barbs_units = "m/s"
@@ -175,7 +176,7 @@ def skewt(
     skew.plot_moist_adiabats(lw=0.75, alpha=0.25)
     skew.plot_mixing_lines(alpha=0.5)
     # Slanted line on 0 isotherm
-    skew.ax.axvline(0, color="c", linestyle="--", linewidth=2, alpha=0.5)
+    skew.ax.axvline(0, color="c", linestyle="--", linewidth=1.5, alpha=0.5)
 
     # If there is no explicit "surface_potential_temperature" and/or "surface_mixing_ratio"
     # DataArray, assume the value(s) of the level with the highest pressure.
@@ -206,7 +207,7 @@ def skewt(
     skew.ax.text(
         0.885,
         lcl_pressure,
-        "LCL",
+        f"LCL ({lcl_pressure.item():~.0f})",
         transform=trans,
         horizontalalignment="left",
         verticalalignment="center",
@@ -262,7 +263,7 @@ def skewt(
     skew.shade_cape(p, Tv, profTv)
 
     # Good bounds for aspect ratio
-    skew.ax.set_xlim(-40, 55)
+    skew.ax.set_xlim(xlim)
     skew.ax.set_ylim(None, ptop)
 
     title = ""
@@ -294,6 +295,7 @@ def skewt(
             horizontalalignment="left",
             verticalalignment="center",
             color="brown",
+            clip_on=True,
         )
 
     skip_winds = not u.any() and not v.any()
