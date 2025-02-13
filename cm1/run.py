@@ -73,7 +73,7 @@ export PALS_CPU_BIND=depth
 cd {self.pbs.run_dir}
 
 # run CM1
-mpiexec --cpu-bind depth ./cm1.exe >& {printout}
+mpiexec --cpu-bind depth ./cm1.exe >& {self.printout}
 """
         script_full_path = os.path.join(self.pbs.run_dir, script_path)
         with open(script_full_path, "w") as script_file:
