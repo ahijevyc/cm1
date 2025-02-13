@@ -80,22 +80,27 @@ cd $rundir
 # Copy all files from the case configuration directory to the run directory
 cp -v $CM1/run/config_files/$case/* .
 
-# Link longwave and shortwave radiation data to run directory
-ln -sv $CM1/run/RRTMG_LW_DATA .
-ln -sv $CM1/run/RRTMG_SW_DATA .
+# Put longwave and shortwave radiation data in run directory
+cp -v $CM1/run/RRTMG_LW_DATA $CM1/run/RRTMG_SW_DATA .
 
 # Modify specific parameters in the namelist.input file
+# On macOS, sed -i requires an empty string or a backup suffix.
 # - Set `output_format` to 2 (NetCDF)
+sed -i '' "/output_format/s/=[^,]*/= 2/" namelist.input
 # - Set `output_filetype` to 1 (Single file)
-sed -i "/output_format/s/=[^,]*/= 2/" namelist.input
-sed -i "/output_filetype/s/=[^,]*/= 1/" namelist.input
+sed -i '' "/output_filetype/s/=[^,]*/= 1/" namelist.input
 
-# Create a symbolic link to the CM1 executable
-ln -sv $CM1/run/cm1.exe
+# Copy CM1 executable
+cp -v $CM1/run/cm1.exe .
 
-set pbsjob=pbs.job
+set log=cm1.print.out
+which qsub >& /dev/null
+if ($status != 0) then
+   cm1.exe |& tee $log
+else
+   set pbsjob=pbs.job
 
-cat<<END>$pbsjob
+   cat<<END>$pbsjob
 # job name:
 #PBS -N $case
 #PBS -A $PBS_ACCOUNT
@@ -131,10 +136,11 @@ export PALS_DEPTH=1
 export PALS_CPU_BIND=depth
 
 # run CM1
-mpiexec --cpu-bind depth ./cm1.exe >& cm1.print.out
+mpiexec --cpu-bind depth ./cm1.exe >& $log
 END
 
-qsub $pbsjob
+   qsub $pbsjob
+endif
 
 # End of script
 
