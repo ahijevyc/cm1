@@ -471,7 +471,7 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
         os.makedirs(CACHE_DIR)
 
     def download_from_s3(var, level_type, start_end_str):
-        file_name = f"e5.oper.an.{level_type}.128_{var}.{start_end_str}.nc"
+        file_name = f"e5.oper.{level_type}.128_{var}.{start_end_str}.nc"
         cache_file_path = CACHE_DIR / file_name
         if os.path.exists(cache_file_path):
             logging.warning(f"Found cached s3 {var} {time}")
@@ -480,9 +480,10 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
         if "s3" not in globals():
             s3 = s3fs.S3FileSystem(anon=True)
 
+        year_month_dir = start_end_str[0:6]
         s3_file_path = (
             S3_BUCKET
-            + f"/e5.oper.an.{level_type}/{time.year}{time.month:02d}/{file_name}"
+            + f"/e5.oper.{level_type}/{year_month_dir}/{file_name}"
         )
         if not s3.exists(s3_file_path):
             raise FileNotFoundError(f"{s3_file_path} not found in S3 bucket")
@@ -495,7 +496,7 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
 
     start_end_str = f"{time.strftime('%Y%m%d00')}_{time.strftime('%Y%m%d23')}"
     cache_file_paths = [
-        download_from_s3(var, "pl", start_end_str)
+        download_from_s3(var, "an.pl", start_end_str)
         for var in [
             "133_q.ll025sc",
             "130_t.ll025sc",
@@ -515,7 +516,7 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
     lastdayofmonth = time + pd.offsets.MonthEnd(0)
     start_end_str = f"{time.strftime('%Y%m')}0100_{time.strftime('%Y%m')}{lastdayofmonth.strftime('%d')}23"
     cache_file_paths = [
-        download_from_s3(var, "sfc", start_end_str)
+        download_from_s3(var, "an.sfc", start_end_str)
         for var in [
             "134_sp.ll025sc",
             "165_10u.ll025sc",
@@ -537,26 +538,23 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
         mcalc.specific_humidity_from_dewpoint(ds_sfc.SP, ds_sfc.VAR_2D)
     )
 
-    file_name = "e5.oper.invariant.128_129_z.ll025sc.1979010100_1979010100.nc"
-    cache_file_path = CACHE_DIR / file_name
-    if not os.path.exists(cache_file_path):
-        if "s3" not in globals():
-            s3 = s3fs.S3FileSystem(anon=True)
-        s3_file_path = S3_BUCKET + "/e5.oper.invariant/197901/" + file_name
-        if not s3.exists(s3_file_path):
-            raise FileNotFoundError(f"{s3_file_path} not found in S3 bucket")
-        logging.warning(f"Downloading {s3_file_path} from S3...")
-        with s3.open(s3_file_path, "rb") as f:
-            xarray.open_dataset(f).to_netcdf(cache_file_path)
-        logging.warning(f"Downloaded and cached: {cache_file_path}")
+    cache_file_paths = [
+        download_from_s3(var, "invariant", "1979010100_1979010100")
+        for var in [
+            "129_z.ll025sc",
+            "172_lsm.ll025sc",
+        ]
+    ]
 
-    Zsfc = (
-        xarray.open_dataset(cache_file_path, drop_variables=["utc_date", "time"])
+    invariant = (
+        xarray.open_mfdataset(cache_file_paths, drop_variables=["utc_date", "time"])
         .squeeze(dim="time")
-        .metpy.quantify()
         .rename_vars({"Z": "Zsfc"})
-    ) / metpy.constants.g
-    ds = ds_pl.merge(ds_sfc).merge(Zsfc)
+    )
+    del invariant["LSM"].attrs["units"] # can't quantify unit string "(0-1)"
+    invariant = invariant.metpy.quantify()
+    invariant["Zsfc"] = invariant["Zsfc"] / metpy.constants.g
+    ds = ds_pl.merge(ds_sfc).merge(invariant)
 
     return ds
 
