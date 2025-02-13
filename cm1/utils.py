@@ -196,22 +196,24 @@ def skewt(
         f"p_parcel {ds.SP.item():~} t_parcel {t_parcel.item():~} "
         f"Td_parcel {Td_parcel.item():~} q_parcel {q_parcel.item():~}"
     )
-    # Calculate LCL pressure and label it on SkewT.
+
+    # Calculate LCL pressure and label level on SkewT.
     lcl_pressure, lcl_temperature = mpcalc.lcl(ds.SP, t_parcel, Td_parcel)
     logging.info(f"lcl_p {lcl_pressure:~} lcl_t {lcl_temperature:~}")
 
     trans = transforms.blended_transform_factory(skew.ax.transAxes, skew.ax.transData)
     skew.ax.plot(
-        [0.86, 0.88], 2 * [lcl_pressure.m_as("hPa")], transform=trans, color="brown"
+        [0.82, 0.85], 2 * [lcl_pressure.m_as("hPa")], transform=trans, color="brown"
     )
     skew.ax.text(
-        0.885,
+        1,
         lcl_pressure,
-        f"LCL ({lcl_pressure.item():~.0f})",
+        f"LCL ({lcl_pressure.to("hPa").item():~.0f})",
         transform=trans,
-        horizontalalignment="left",
+        horizontalalignment="right",
         verticalalignment="center",
         color="brown",
+        fontsize="x-small",
     )
 
     # Calculate full parcel profile with LCL.
@@ -257,7 +259,10 @@ def skewt(
     # Parcel virtual temperature
     skew.plot(p, profTv, "k", linewidth=1.5, linestyle="dashed")
 
-    sfcape, sfcin = mpcalc.cape_cin(p, Tv, Td, profTv)
+    # Don't feed cape_cin virtual temperature. It assumes prof
+    # is regular temperature, not virtual. It converts to virtual
+    # temperature on its own.
+    sfcape, sfcin = mpcalc.cape_cin(p, Tv, Td, prof)
     # Shade areas of CAPE and CIN
     skew.shade_cin(p, Tv, profTv)
     skew.shade_cape(p, Tv, profTv)
