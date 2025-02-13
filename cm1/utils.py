@@ -208,7 +208,7 @@ def skewt(
     skew.ax.text(
         1,
         lcl_pressure,
-        f"LCL ({lcl_pressure.to("hPa").item():~.0f})",
+        f"LCL {lcl_pressure.to("hPa").item():~.0f}",
         transform=trans,
         horizontalalignment="right",
         verticalalignment="center",
@@ -290,7 +290,7 @@ def skewt(
         s = f"{label_hgt:~.0f}"
         if label_hgt == 0 * units.km:
             agl2p = ds.SP.item()
-            s = f"SFC ({ds.Zsfc.item():~.0f})"
+            s = f"SFC {ds.Zsfc.item():~.0f}"
         skew.ax.plot([0, 0.01], 2 * [agl2p.m_as("hPa")], transform=trans, color="brown")
         skew.ax.text(
             0.01,
