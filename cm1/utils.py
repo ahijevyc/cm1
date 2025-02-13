@@ -193,7 +193,7 @@ def skewt(
         q_parcel = ds.Q.sel(level=parcel_level)
     Td_parcel = mpcalc.dewpoint(mpcalc.vapor_pressure(ds.SP, q_parcel))
     logging.info(
-        f"p_parcel {ds.SP.item():~} t_parcel {t_parcel.item():~} "
+        f"p_parcel {ds.SP.item():~} t_parcel {t_parcel.item().to('degC'):~} "
         f"Td_parcel {Td_parcel.item():~} q_parcel {q_parcel.item():~}"
     )
 
@@ -208,7 +208,7 @@ def skewt(
     skew.ax.text(
         1,
         lcl_pressure,
-        f"LCL {lcl_pressure.to("hPa").item():~.0f}",
+        f"LCL {lcl_pressure.to('hPa').item():~.0f}",
         transform=trans,
         horizontalalignment="right",
         verticalalignment="center",
@@ -225,7 +225,9 @@ def skewt(
         # Averaging temperature, pressure, and mixing ratio along levels can
         # make mixing ratio above saturation, making LCL below profile.
         # Don't bother adding lcl_pressure point in that case.
-        logging.warning(f"lcl outside range of p {p.min().item()} {p.max().item()}")
+        logging.warning(
+            f"lcl outside range of p {p.min().item():~} {p.max().item():~}"
+        )
         p = p.data  # convert to Quantity array (with units) so we can sort it
     # Create reverse sorted array of pressure. mpcalc assumes bottom-up arrays.
     p = np.sort(p)[::-1]

@@ -29,7 +29,7 @@ class CM1Run:
         """
         Initialize a CM1 model run.
 
-        :param namelist: Instance of FortranNamelistController.
+        :param namelist: Instance of f90nml.Namelist.
         :param pbs_config: Instance of PBS.
         """
         self.namelist = namelist
@@ -55,7 +55,7 @@ class CM1Run:
 # queue (works from derecho or casper)
 #PBS -q main@desched1
 
-# Write STDOUT and STDERR to run directory.
+# Direct STDOUT and STDERR to run directory.
 #PBS -o {self.pbs.run_dir}
 #PBS -e {self.pbs.run_dir}
 
