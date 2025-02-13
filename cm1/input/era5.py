@@ -17,7 +17,7 @@ from sklearn.neighbors import BallTree
 from cm1.utils import TMPDIR, mean_lat_lon
 
 
-def campaign(
+def load_from_campaign(
     time: pd.Timestamp,
     glade: Path,
     rdaindex: str,
@@ -27,7 +27,8 @@ def campaign(
     drop_vars: list = ["utc_date"],
 ) -> xarray.Dataset:
     """
-    Load ERA5 dataset for specified time.
+    Load ERA5 dataset for specified time from
+    campaign storage
 
     Parameters
     ----------
@@ -51,11 +52,15 @@ def campaign(
     """
     rdapath = Path(glade) / "glade/campaign/collections/rda/data"
 
+    # model level invariant files don't have no year_month_dir.
+    year_month_dir = (
+        "" if rdaindex == "d633006" and level_type == "e5.oper.invariant" else time.strftime("%Y%m")
+    )
     local_files = [
         rdapath
         / rdaindex
         / level_type
-        / time.strftime("%Y%m")
+        / year_month_dir
         / f"{level_type}.{varname}.{start_end_str}.nc"
         for varname in varnames
     ]
@@ -77,16 +82,14 @@ def circle_neighborhood(ds, lat, lon, neighbors, debug=True):
     """
     if neighbors > 100:
         logging.warning(
-            f"averaging {neighbors} neighbors along model levels may result in averaging between wildly different pressures and heights"
+            f"averaging {neighbors} neighbors along model levels may include wildly different pressures and heights"
         )
     # indexing="ij" allows Dataset.stack dims order to be "latitude", "longitude"
     lat2d, lon2d = np.meshgrid(ds.latitude, ds.longitude, indexing="ij")
     latlon = np.deg2rad(np.vstack([lat2d.ravel(), lon2d.ravel()]).T)
     X = [[lat.m_as("radian"), lon.m_as("radian")]]
 
-    (idx,) = BallTree(latlon, metric="haversine").query(
-        X, return_distance=False, k=neighbors
-    )
+    (idx,) = BallTree(latlon, metric="haversine").query(X, return_distance=False, k=neighbors)
     ds = ds.stack(z=("latitude", "longitude")).isel(z=idx).load()
     lat_mean, lon_mean = mean_lat_lon(ds.latitude, ds.longitude)
     sfc_pressure_range = ds.SP.max() - ds.SP.min()
@@ -104,9 +107,7 @@ def circle_neighborhood(ds, lat, lon, neighbors, debug=True):
 
         fig, ax = plt.subplots(
             figsize=(10, 5),
-            subplot_kw={
-                "projection": ccrs.PlateCarree(central_longitude=lon_mean.data)
-            },
+            subplot_kw={"projection": ccrs.PlateCarree(central_longitude=lon_mean.data)},
         )
 
         # Add features to the map
@@ -142,10 +143,14 @@ def circle_neighborhood(ds, lat, lon, neighbors, debug=True):
         assert abs(lat_mean - lat) < 1, f"meanlat {lat_mean} lat {lat}"
         assert (
             np.cos(np.radians(lon_mean)) - np.cos(np.radians(lon))
-        ) < 0.01, f"meanlon {lon_mean} lon {lon} {np.cos(np.radians(lon_mean)) - np.cos(np.radians(lon))}"
+        ) < 0.01, (
+            f"meanlon {lon_mean} lon {lon} {np.cos(np.radians(lon_mean)) - np.cos(np.radians(lon))}"
+        )
         assert (
             np.sin(np.radians(lon_mean)) - np.sin(np.radians(lon))
-        ) < 0.01, f"meanlon {lon_mean} lon {lon} {np.sin(np.radians(lon_mean)) - np.sin(np.radians(lon))}"
+        ) < 0.01, (
+            f"meanlon {lon_mean} lon {lon} {np.sin(np.radians(lon_mean)) - np.sin(np.radians(lon))}"
+        )
 
     ds = ds.mean(dim="z")  # drop `z` `latitude` `longitude` dimensions
     ds = ds.assign_coords(latitude=lat_mean, longitude=lon_mean)
@@ -220,58 +225,22 @@ def compute_z_level(ds: xarray.Dataset, lev: int, z_h: float) -> Tuple[float, fl
     return z_h, z_f
 
 
-def invariant(
-    glade: Path = Path("/"),
-) -> xarray.Dataset:
-    """
-    Load invariant ERA5 dataset.
-
-    Parameters
-    ----------
-    glade : Path, optional
-        Path to glade directory. Default is Path("/").
-
-    Notes
-    -----
-    This function loads multiple NetCDF files from a specified directory,
-    drops the "utc_date" variable to avoid errors related to "Gregorian year",
-    and returns the dataset after squeezing and dropping the "time" dimension.
-
-    Returns
-    -------
-    xarray.Dataset
-        Dataset containing invariant ERA5 data.
-    """
-
-    rdaindex = "d633000"
-    varnames = [
-        "128_026_cl.ll025sc",
-        "128_129_z.ll025sc",
-        "128_027_cvl.ll025sc",
-        "128_160_sdor.ll025sc",
-        "128_028_cvh.ll025sc",
-        "128_161_isor.ll025sc",
-        "128_029_tvl.ll025sc",
-        "128_162_anor.ll025sc",
-        "128_030_tvh.ll025sc",
-        "128_163_slor.ll025sc",
-        "128_043_slt.ll025sc",
-        "128_172_lsm.ll025sc",
-        "128_074_sdfor.ll025sc",
-        "228_007_dl.ll025sc",
-    ]
-    ds = campaign(
-        pd.to_datetime("19790101"),
-        glade,
-        rdaindex,
-        "e5.oper.invariant",
-        varnames,
-        "1979010100_1979010100",
-    )
-
-    ds = ds.drop_vars("time")
-
-    return ds
+INVARIANT_VARNAMES = [
+    "128_026_cl.ll025sc",
+    "128_027_cvl.ll025sc",
+    "128_028_cvh.ll025sc",
+    "128_029_tvl.ll025sc",
+    "128_030_tvh.ll025sc",
+    "128_043_slt.ll025sc",
+    "128_074_sdfor.ll025sc",
+    "128_129_z.ll025sc",
+    "128_160_sdor.ll025sc",
+    "128_161_isor.ll025sc",
+    "128_162_anor.ll025sc",
+    "128_163_slor.ll025sc",
+    "128_172_lsm.ll025sc",
+    "228_007_dl.ll025sc",
+]
 
 
 def model_level(
@@ -279,7 +248,8 @@ def model_level(
     glade: Path = Path("/"),
 ) -> xarray.Dataset:
     """
-    Load native model levels ERA5 dataset for specified time.
+    Load native model levels ERA5 dataset for specified time
+    from campaign storage.
 
     Parameters
     ----------
@@ -299,7 +269,7 @@ def model_level(
     end_hour = start_hour + pd.Timedelta(5, unit="hour")
     start_end_str = f"{start_hour.strftime('%Y%m%d%H')}_{end_hour.strftime('%Y%m%d%H')}"
 
-    ds = campaign(
+    ds = load_from_campaign(
         time,
         glade,
         rdaindex,
@@ -323,6 +293,8 @@ def model_level(
     ds["P"] = ds["P"].transpose(*ds.U.dims)  # keep dim order consistent with U
     ds["P_half"] = ds.a_half + ds.b_half * ds.SP
     ds["P_half"].attrs.update(dict(long_name="pressure"))
+
+    # Considered more fields but only Zsfc is available for model levels.
     # Invariant field geopotential height at surface
     Zsfc = (
         xarray.open_dataset(
@@ -366,6 +338,7 @@ def pressure_level(
 ) -> xarray.Dataset:
     """
     Load ERA5 dataset for specified time and configuration.
+    Comes from campaign storage.
 
     Parameters
     ----------
@@ -384,7 +357,7 @@ def pressure_level(
     end = start + pd.Timedelta(23, unit="hour")
     start_end_str = f"{start.strftime('%Y%m%d%H')}_{end.strftime('%Y%m%d%H')}"
 
-    ds_pl = campaign(
+    ds_pl = load_from_campaign(
         time,
         glade,
         rdaindex,
@@ -405,9 +378,11 @@ def pressure_level(
     ds_pl["Z"] /= metpy.constants.g
 
     lastdayofmonth = time + pd.offsets.MonthEnd(0)
-    start_end_str = f"{time.strftime('%Y%m')}0100_{time.strftime('%Y%m')}{lastdayofmonth.strftime('%d')}23"
+    start_end_str = (
+        f"{time.strftime('%Y%m')}0100_{time.strftime('%Y%m')}{lastdayofmonth.strftime('%d')}23"
+    )
 
-    ds_sfc = campaign(
+    ds_sfc = load_from_campaign(
         time,
         glade,
         rdaindex,
@@ -432,21 +407,44 @@ def pressure_level(
         mcalc.specific_humidity_from_dewpoint(ds_sfc.SP, ds_sfc.VAR_2D)
     )
 
-    file_name = (
-        Path(glade)
-        / "glade/campaign/collections/rda/data"
-        / "d633000"
-        / "e5.oper.invariant"
-        / "197901"
-        / "e5.oper.invariant.128_129_z.ll025sc.1979010100_1979010100.nc"
-    )
-    Zsfc = (
-        xarray.open_dataset(file_name, drop_variables=["utc_date", "time"])
-        .squeeze(dim="time")
-        .metpy.quantify()
+    invariant = (
+        load_from_campaign(
+            pd.to_datetime("19790101"),
+            glade,
+            rdaindex,
+            "e5.oper.invariant",
+            INVARIANT_VARNAMES,
+            "1979010100_1979010100",
+        )
+        .drop_vars("time")
         .rename_vars({"Z": "Zsfc"})
-    ) / metpy.constants.g
-    ds = ds_pl.merge(ds_sfc).merge(Zsfc)
+    )
+    for var in invariant:
+        u = invariant[var].attrs["units"]
+        if u in ["(0-1)", "-", "index"]:
+            logging.warning(f"can't quantify {var} unit string '{u}'")
+            del invariant[var].attrs["units"]
+        invariant[var].metpy.quantify()
+    invariant = invariant.metpy.quantify()
+    invariant["Zsfc"] = invariant["Zsfc"] / metpy.constants.g
+    ds = ds_pl.merge(ds_sfc).merge(invariant)
+
+    if False:
+        file_name = (
+            Path(glade)
+            / "glade/campaign/collections/rda/data"
+            / "d633000"
+            / "e5.oper.invariant"
+            / "197901"
+            / "e5.oper.invariant.128_129_z.ll025sc.1979010100_1979010100.nc"
+        )
+        Zsfc = (
+            xarray.open_dataset(file_name, drop_variables=["utc_date", "time"])
+            .squeeze(dim="time")
+            .metpy.quantify()
+            .rename_vars({"Z": "Zsfc"})
+        ) / metpy.constants.g
+        ds = ds_pl.merge(ds_sfc).merge(Zsfc)
 
     return ds
 
@@ -471,7 +469,7 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
         os.makedirs(CACHE_DIR)
 
     def download_from_s3(var, level_type, start_end_str):
-        file_name = f"e5.oper.{level_type}.128_{var}.{start_end_str}.nc"
+        file_name = f"e5.oper.{level_type}.{var}.{start_end_str}.nc"
         cache_file_path = CACHE_DIR / file_name
         if os.path.exists(cache_file_path):
             logging.warning(f"Found cached s3 {var} {time}")
@@ -481,10 +479,7 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
             s3 = s3fs.S3FileSystem(anon=True)
 
         year_month_dir = start_end_str[0:6]
-        s3_file_path = (
-            S3_BUCKET
-            + f"/e5.oper.{level_type}/{year_month_dir}/{file_name}"
-        )
+        s3_file_path = S3_BUCKET + f"/e5.oper.{level_type}/{year_month_dir}/{file_name}"
         if not s3.exists(s3_file_path):
             raise FileNotFoundError(f"{s3_file_path} not found in S3 bucket")
 
@@ -498,12 +493,12 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
     cache_file_paths = [
         download_from_s3(var, "an.pl", start_end_str)
         for var in [
-            "133_q.ll025sc",
-            "130_t.ll025sc",
-            "131_u.ll025uv",
-            "132_v.ll025uv",
-            "135_w.ll025sc",
-            "129_z.ll025sc",
+            "128_133_q.ll025sc",
+            "128_130_t.ll025sc",
+            "128_131_u.ll025uv",
+            "128_132_v.ll025uv",
+            "128_135_w.ll025sc",
+            "128_129_z.ll025sc",
         ]
     ]
 
@@ -514,15 +509,17 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
     ds_pl["Z"] /= metpy.constants.g
 
     lastdayofmonth = time + pd.offsets.MonthEnd(0)
-    start_end_str = f"{time.strftime('%Y%m')}0100_{time.strftime('%Y%m')}{lastdayofmonth.strftime('%d')}23"
+    start_end_str = (
+        f"{time.strftime('%Y%m')}0100_{time.strftime('%Y%m')}{lastdayofmonth.strftime('%d')}23"
+    )
     cache_file_paths = [
         download_from_s3(var, "an.sfc", start_end_str)
         for var in [
-            "134_sp.ll025sc",
-            "165_10u.ll025sc",
-            "166_10v.ll025sc",
-            "167_2t.ll025sc",
-            "168_2d.ll025sc",
+            "128_134_sp.ll025sc",
+            "128_165_10u.ll025sc",
+            "128_166_10v.ll025sc",
+            "128_167_2t.ll025sc",
+            "128_168_2d.ll025sc",
         ]
     ]
 
@@ -539,11 +536,7 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
     )
 
     cache_file_paths = [
-        download_from_s3(var, "invariant", "1979010100_1979010100")
-        for var in [
-            "129_z.ll025sc",
-            "172_lsm.ll025sc",
-        ]
+        download_from_s3(var, "invariant", "1979010100_1979010100") for var in INVARIANT_VARNAMES
     ]
 
     invariant = (
@@ -551,7 +544,12 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
         .squeeze(dim="time")
         .rename_vars({"Z": "Zsfc"})
     )
-    del invariant["LSM"].attrs["units"] # can't quantify unit string "(0-1)"
+    for var in invariant:
+        u = invariant[var].attrs["units"]
+        if u in ["(0-1)", "-", "index"]:
+            logging.warning(f"can't quantify {var} unit string '{u}'")
+            del invariant[var].attrs["units"]
+        invariant[var].metpy.quantify()
     invariant = invariant.metpy.quantify()
     invariant["Zsfc"] = invariant["Zsfc"] / metpy.constants.g
     ds = ds_pl.merge(ds_sfc).merge(invariant)
@@ -600,11 +598,7 @@ def nearest_grid_neighbors(dataset: xarray.Dataset, lat: Quantity, lon: Quantity
     # Define neighbors
     if lat_increasing:
         # Latitude increasing from north to south
-        north = (
-            {"latitude": lat_idx - 1, "longitude": lon_idx}
-            if lat_idx - 1 >= 0
-            else None
-        )
+        north = {"latitude": lat_idx - 1, "longitude": lon_idx} if lat_idx - 1 >= 0 else None
         south = (
             {"latitude": lat_idx + 1, "longitude": lon_idx}
             if lat_idx + 1 < dataset.latitude.size
@@ -617,11 +611,7 @@ def nearest_grid_neighbors(dataset: xarray.Dataset, lat: Quantity, lon: Quantity
             if lat_idx + 1 < dataset.latitude.size
             else None
         )
-        south = (
-            {"latitude": lat_idx - 1, "longitude": lon_idx}
-            if lat_idx - 1 >= 0
-            else None
-        )
+        south = {"latitude": lat_idx - 1, "longitude": lon_idx} if lat_idx - 1 >= 0 else None
 
     # Handle longitude wrapping
     lon_size = dataset.longitude.size
