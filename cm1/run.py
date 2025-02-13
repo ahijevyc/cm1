@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 import subprocess
@@ -24,7 +25,7 @@ class PBS:
 
 
 class CM1Run:
-    def __init__(self, namelist: f90nml.Namelist, pbs_config: PBS):
+    def __init__(self, namelist: f90nml.Namelist, pbs_config: PBS, **kwargs):
         """
         Initialize a CM1 model run.
 
@@ -33,6 +34,7 @@ class CM1Run:
         """
         self.namelist = namelist
         self.pbs = pbs_config
+        self.printout = kwargs.get("printout", "cm1.print.out")
 
     def generate_pbs_script(self, script_path="pbs.job"):
         """Generate a PBS job script for the CM1 model run."""
@@ -71,7 +73,7 @@ export PALS_CPU_BIND=depth
 cd {self.pbs.run_dir}
 
 # run CM1
-mpiexec --cpu-bind depth ./cm1.exe >& cm1.print.out
+mpiexec --cpu-bind depth ./cm1.exe >& {printout}
 """
         script_full_path = os.path.join(self.pbs.run_dir, script_path)
         with open(script_full_path, "w") as script_file:
@@ -82,3 +84,13 @@ mpiexec --cpu-bind depth ./cm1.exe >& cm1.print.out
         """Submit the PBS job."""
         script_path = self.generate_pbs_script()
         subprocess.run(["qsub", script_path], check=True)
+
+    def run(self, background=False):
+        """Run cm1.exe as you would from command line"""
+        os.chdir(self.pbs.run_dir)
+        logging.info(f"stdout and stderr directed to {self.printout}")
+        with open(self.printout, "w") as f:
+            if background:
+                subprocess.Popen("cm1.exe", stdout=f, stderr=f)
+            else:
+                subprocess.run("cm1.exe", stdout=f, stderr=f)
