@@ -24,7 +24,7 @@ def load_from_campaign(
     level_type: str,
     varnames: list,
     start_end_str: str,
-    drop_vars: list = ["utc_date"],
+    drop_variables: list = ["utc_date"],
 ) -> xarray.Dataset:
     """
     Load ERA5 dataset for specified time from
@@ -42,7 +42,7 @@ def load_from_campaign(
         List of variable names to load.
     start_end_str : str
         start and end time part of filename
-    drop_vars : list, optional
+    drop_variables : list, optional
         List of variables to drop from the dataset (default is ["utc_date"]).
 
     Returns
@@ -65,7 +65,7 @@ def load_from_campaign(
         for varname in varnames
     ]
 
-    ds = xarray.open_mfdataset(local_files, drop_variables=drop_vars)
+    ds = xarray.open_mfdataset(local_files, drop_variables=drop_variables)
     logging.info(f"opened {len(local_files)} local {level_type} files")
     logging.debug(local_files)
     logging.info(f"selected {time}")
@@ -95,7 +95,7 @@ def circle_neighborhood(ds, lat, lon, neighbors, debug=True):
     sfc_pressure_range = ds.SP.max() - ds.SP.min()
     if sfc_pressure_range > 1 * units.hPa:
         logging.warning(f"sfc_pressure_range: {sfc_pressure_range:~}")
-    sfc_height_range = ds.Zsfc.max() - ds.Zsfc.min()
+    sfc_height_range = ds.surface_geopotential_height.max() - ds.surface_geopotential_height.min()
     if sfc_height_range > 10 * units.m:
         logging.warning(f"sfc_height_range: {sfc_height_range:~}")
 
@@ -243,6 +243,27 @@ INVARIANT_VARNAMES = [
 ]
 
 
+def quantify_invariant(invariant: xarray.Dataset) -> xarray.Dataset:
+    """
+    Quantify invariant Dataset
+    Squeeze time dimension if present
+    rename Z surface geopotential
+    remove units that metpy doesn't handle
+    convert surface geopotential to height
+    """
+    invariant = invariant.squeeze()  # squeeze time, if present
+    invariant = invariant.rename_vars({"Z": "surface_geopotential"})
+    for var in invariant:
+        u = invariant[var].attrs["units"]
+        if u in ["(0-1)", "-", "index"]:
+            logging.info(f"can't quantify {var} unit string '{u}'")
+            del invariant[var].attrs["units"]
+    invariant = invariant.metpy.quantify()
+    invariant["surface_geopotential_height"] = invariant["surface_geopotential"] / metpy.constants.g
+    
+    return invariant
+
+
 def model_level(
     time: pd.Timestamp,
     glade: Path = Path("/"),
@@ -294,25 +315,23 @@ def model_level(
     ds["P_half"] = ds.a_half + ds.b_half * ds.SP
     ds["P_half"].attrs.update(dict(long_name="pressure"))
 
-    # Considered more fields but only Zsfc is available for model levels.
-    # Invariant field geopotential height at surface
-    Zsfc = (
-        xarray.open_dataset(
-            rdapath
-            / rdaindex
-            / "e5.oper.invariant"
-            / "e5.oper.invariant.128_129_z.regn320sc.2016010100_2016010100.nc"
+    # rdahelp says /gpfs/csfs1/collections/rda/decsdata/ds630.0/P/e5.oper.invariant/201601/
+    # has same resolution as the invariant surface geopotential you refer to in d633006.
+
+    invariant = (
+        xarray.open_mfdataset(
+            Path("/gpfs/csfs1/collections/rda/decsdata/ds630.0/P/e5.oper.invariant/201601").glob(
+                "*.nc"
+            ),
+            drop_variables=["utc_date", "time"],
         )
-        .squeeze()
-        .drop_vars(["utc_date", "time"])
-        .metpy.quantify()
-        .rename_vars({"Z": "Zsfc"})
     )
-    ds = ds.merge(Zsfc)
+    invariant = quantify_invariant(invariant)
+    ds = ds.merge(invariant)
 
     logging.warning("filling height using hypsometric equation")
     ds["Tv"] = mcalc.thermo.virtual_temperature(ds.T, ds.Q)
-    z_h = ds.Zsfc.assign_coords(half_level=ds.half_level.max())
+    z_h = ds.surface_geopotential.assign_coords(half_level=ds.half_level.max())
     Z = []  # geopotential on full levels
     Z_h = [z_h]  # geopotential on half levels
     # Loop from last to first level (sfc upward)
@@ -325,8 +344,8 @@ def model_level(
     ds["Z_half"].attrs["long_name"] = "geopotential height"
     ds["Z"] = xarray.concat(Z, dim="level") / metpy.constants.g
     ds["Z"].attrs["long_name"] = "geopotential height"
-    ds["Zsfc"] = ds["Zsfc"] / metpy.constants.g
-    ds["Zsfc"].attrs["long_name"] = "geopotential height at surface"
+    ds["surface_geopotential_height"] = ds["surface_geopotential"] / metpy.constants.g
+    ds["surface_geopotential_height"].attrs["long_name"] = "geopotential height at surface"
     # ds = ds.drop_dims("half_level") # why drop this?
 
     return ds
@@ -417,34 +436,9 @@ def pressure_level(
             "1979010100_1979010100",
         )
         .drop_vars("time")
-        .rename_vars({"Z": "Zsfc"})
     )
-    for var in invariant:
-        u = invariant[var].attrs["units"]
-        if u in ["(0-1)", "-", "index"]:
-            logging.warning(f"can't quantify {var} unit string '{u}'")
-            del invariant[var].attrs["units"]
-        invariant[var].metpy.quantify()
-    invariant = invariant.metpy.quantify()
-    invariant["Zsfc"] = invariant["Zsfc"] / metpy.constants.g
+    invariant = quantify_invariant(invariant)
     ds = ds_pl.merge(ds_sfc).merge(invariant)
-
-    if False:
-        file_name = (
-            Path(glade)
-            / "glade/campaign/collections/rda/data"
-            / "d633000"
-            / "e5.oper.invariant"
-            / "197901"
-            / "e5.oper.invariant.128_129_z.ll025sc.1979010100_1979010100.nc"
-        )
-        Zsfc = (
-            xarray.open_dataset(file_name, drop_variables=["utc_date", "time"])
-            .squeeze(dim="time")
-            .metpy.quantify()
-            .rename_vars({"Z": "Zsfc"})
-        ) / metpy.constants.g
-        ds = ds_pl.merge(ds_sfc).merge(Zsfc)
 
     return ds
 
@@ -541,17 +535,9 @@ def aws(time: pd.Timestamp) -> xarray.Dataset:
 
     invariant = (
         xarray.open_mfdataset(cache_file_paths, drop_variables=["utc_date", "time"])
-        .squeeze(dim="time")
-        .rename_vars({"Z": "Zsfc"})
     )
-    for var in invariant:
-        u = invariant[var].attrs["units"]
-        if u in ["(0-1)", "-", "index"]:
-            logging.warning(f"can't quantify {var} unit string '{u}'")
-            del invariant[var].attrs["units"]
-        invariant[var].metpy.quantify()
-    invariant = invariant.metpy.quantify()
-    invariant["Zsfc"] = invariant["Zsfc"] / metpy.constants.g
+    invariant = quantify_invariant(invariant)
+    
     ds = ds_pl.merge(ds_sfc).merge(invariant)
 
     return ds
