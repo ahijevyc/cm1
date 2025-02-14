@@ -185,14 +185,15 @@ def read_from_txt(file_path):
 
     # Read the remaining columns into a pandas DataFrame
     # Specify column names and skip the first line (header)
-    column_names = ["Z", "theta", "Q", "U", "V"]
+    column_names = ["Z", "theta", "qv", "U", "V"]
     df = pd.read_csv(file_path, sep=r"\s+", skiprows=1, names=column_names)
     # Rename the index to "level"
     df = df.rename_axis("level")
     ds = df.to_xarray()
 
     # Add units and calculate pressure
-    ds["Q"] = ds["Q"] * units.g / units.kg
+    ds["qv"] = ds["qv"] * units.g / units.kg  # mixing ratio
+    ds["Q"] = mcalc.specific_humidity_from_mixing_ratio(ds["qv"])
     ds["SP"] = surface_pressure
     ds["SP"] *= units.hPa
     ds["theta"] = ds["theta"] * units.K
@@ -207,7 +208,7 @@ def read_from_txt(file_path):
         T = mcalc.temperature_from_potential_temperature(
             p_bot, ds.theta.sel(level=level)
         )
-        Tv = mcalc.thermo.virtual_temperature(T, ds.Q.sel(level=level))
+        Tv = mcalc.thermo.virtual_temperature(T, ds.qv.sel(level=level))
         dz = ds.Z.sel(level=level) - z_bot
         p_bot = p_bot * np.exp(-metpy.constants.g * dz / metpy.constants.Rd / Tv)
         assert (
@@ -220,15 +221,15 @@ def read_from_txt(file_path):
     ds["P"] = xarray.DataArray(P, coords=[ds.level])
     ds["P"] *= ds.SP.metpy.units
     ds["T"] = mcalc.temperature_from_potential_temperature(ds["P"], ds["theta"])
-    ds["Tv"] = mcalc.thermo.virtual_temperature(ds.T, ds.Q)
+    ds["Tv"] = mcalc.thermo.virtual_temperature(ds.T, ds.qv)
 
     # Add surface data
     ds["surface_potential_temperature"] = surface_theta
     ds["surface_potential_temperature"] *= units.K
     ds["surface_mixing_ratio"] = surface_mixing_ratio
     ds["surface_mixing_ratio"] *= units.g / units.kg
-    ds["Zsfc"] = 0.0
-    ds["Zsfc"] *= units.m
+    ds["surface_geopotential_height"] = 0.0
+    ds["surface_geopotential_height"] *= units.m
     ds["U"] = ds["U"] * units.m / units.s
     ds["V"] = ds["V"] * units.m / units.s
     return ds
@@ -312,16 +313,16 @@ def to_txt(ds: xarray.Dataset) -> str:
         if "surface_potential_temperature" in ds
         else ds["theta"].sel(level=sfc)
     )
-    ds["Q"] = ds["Q"].metpy.convert_units("g/kg")
+    ds["qv"] = mcalc.mixing_ratio_from_specific_humidity(ds["Q"]).metpy.convert_units("g/kg")
     sfc_qv_gkg = (
         ds["surface_mixing_ratio"].metpy.convert_units("g/kg")
         if "surface_mixing_ratio" in ds
-        else ds.Q.sel(level=sfc)
+        else ds.qv.sel(level=sfc)
     )
 
     s = f"{sfc_pres.compute().item().m_as('hPa')} {sfc_theta_K.values} {sfc_qv_gkg.values}\n"
     s += (
-        ds[["Z", "theta", "Q", "U", "V"]]
+        ds[["Z", "theta", "qv", "U", "V"]]
         .drop_vars(["latitude", "longitude", "time"])
         .to_dataframe()
         .sort_values("Z")  # from surface upward
