@@ -34,7 +34,7 @@ def main() -> None:
         with open(ofile, "rb") as file:
             ds = pickle.load(file)
     else:
-        ds = cm1.input.era5.get(
+        ds = cm1.input.era5.model_level(
             pd.to_datetime(args.time),
             glade=args.glade,
         )
