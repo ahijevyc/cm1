@@ -14,7 +14,7 @@ from metpy.units import units
 from pint import Quantity
 from sklearn.neighbors import BallTree
 
-from cm1.utils import TMPDIR, mean_lat_lon
+from cm1.utils import CAMPAIGNDIR, TMPDIR, mean_lat_lon
 
 
 def load_from_campaign(
@@ -50,7 +50,7 @@ def load_from_campaign(
     xarray.Dataset
         Dataset containing ERA5 data for the specified time and configuration.
     """
-    rdapath = Path(glade) / "glade/campaign/collections/rda/data"
+    rdapath = Path(glade) / CAMPAIGNDIR
 
     # model level invariant files don't have no year_month_dir.
     year_month_dir = (
@@ -283,7 +283,7 @@ def model_level(
         Dataset containing ERA5 data for the specified time.
     """
     # get from campaign storage
-    rdapath = Path(glade) / "glade/campaign/collections/rda/data"
+    rdapath = Path(glade) / CAMPAIGNDIR
     rdaindex = "d633006"
 
     start_hour = time.floor("6h")

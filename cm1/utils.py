@@ -15,6 +15,7 @@ from metpy.units import units
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from pint import Quantity
 
+CAMPAIGNDIR = "glade/campaign/collections/rda/data"
 TMPDIR = Path(os.getenv("TMPDIR"))
 
 
@@ -135,15 +136,15 @@ def skewt(
     logging.info("load dataset")
     ds = ds.load()
     old_nlevel = ds.level.size
-    # Drop low pressure model levels to avoid
-    #  ValueError: ODE Integration failed likely due to small values of pressure.
+    # Drop low pressure model levels to avoid ValueError: ODE Integration failed...
     # Side effect of Dataset.where is that DataArrays without
     # a level dimension like SP are broadcast to all levels.
     # Apply mask only to variables with the 'level' dimension
+    # Mask high pressure levels greater than surface pressure SP
     ds = xarray.Dataset(
         {
             var: (
-                ds[var].where(ds.P >= 10 * units.hPa, drop=True)
+                ds[var].where((ds.P >= 10 * units.hPa) & (ds.P < ds.SP), drop=True)
                 if "level" in ds[var].dims
                 else ds[var]
             )
@@ -151,7 +152,9 @@ def skewt(
         }
     )
 
-    logging.info(f"After dropping low pressure levels, {ds.level.size}/{old_nlevel} remain")
+    logging.info(
+        f"After dropping low pressure levels, {ds.level.size}/{old_nlevel} remain"
+    )
 
     # if args.model_levels, ds["P"] is 3D DataArray with vertical dim = model level.
     # Otherwise pressure is ds.level, a 1-D array of pressure.
@@ -175,51 +178,54 @@ def skewt(
     # Slanted line on 0 isotherm
     skew.ax.axvline(0, color="c", linestyle="--", linewidth=1.5, alpha=0.5)
 
-    # If there is no explicit "surface_potential_temperature" and/or "surface_mixing_ratio"
-    # DataArray, assume the value(s) of the level with the highest pressure.
+    # Get parcel potential temperature and mixing ratio from
+    # "surface_potential_temperature" and/or "surface_mixing_ratio" DataArray.
+    # Otherwise, assume the value(s) of the level with the highest pressure.
     parcel_level = ds.level.sel(level=ds.P.compute().idxmax())
     if "surface_potential_temperature" in ds:
         T_parcel = mpcalc.temperature_from_potential_temperature(
             ds.SP, ds.surface_potential_temperature
         )
-        logging.info(
-            f"got T_parcel {T_parcel.item():~.1f} from SP {ds.SP.item():~} "
-            f"and surface_potential_temperature {ds.surface_potential_temperature.item():~.1f}"
+        logging.warning(
+            f"got T_parcel {T_parcel.metpy.convert_units('degC').item():~.2f} from SP {ds.SP.item():~} "
+            f"and surface_potential_temperature {ds.surface_potential_temperature.metpy.convert_units('degC').item():~.2f}"
         )
     else:
         T_parcel = ds.T.sel(level=parcel_level)
-        logging.info(
-            f"got T_parcel {T_parcel.item():~.1f} from "
+        logging.warning(
+            f"got T_parcel {T_parcel.item():~.2f} from "
             f"highest pressure level {parcel_level.item()}"
         )
     if "surface_mixing_ratio" in ds:
         parcel_mixing_ratio = ds.surface_mixing_ratio
-        logging.info(
+        logging.warning(
             f"got parcel_mixing_ratio "
-            f"{parcel_mixing_ratio.item().to('g/kg'):~.1f} "
+            f"{parcel_mixing_ratio.item().to('g/kg'):~.3f} "
             f"from surface_mixing_ratio"
         )
     else:
         parcel_mixing_ratio = mpcalc.mixing_ratio_from_specific_humidity(
             ds.Q.sel(level=parcel_level)
         )
-        logging.info(
-            f"got parcel_mixing_ratio {parcel_mixing_ratio.item().to('g/kg'):~.1f} "
+        logging.warning(
+            f"got parcel_mixing_ratio {parcel_mixing_ratio.item().to('g/kg'):~.3f} "
             f"from highest pressure level {parcel_level.item()}"
         )
     Td_parcel = mpcalc.dewpoint(mpcalc.vapor_pressure(ds.SP, parcel_mixing_ratio))
-    logging.info(
+    logging.warning(
         f"p_parcel {ds.SP.item():~} T_parcel {T_parcel.item().to('degC'):~} "
-        f"Td_parcel {Td_parcel.item():~.1f} "
+        f"Td_parcel {Td_parcel.item():~.2f} "
         f"parcel_mixing_ratio {parcel_mixing_ratio.item().to('g/kg'):~.3f}"
     )
 
     # Calculate LCL pressure and label level on SkewT.
     lcl_pressure, lcl_temperature = mpcalc.lcl(ds.SP, T_parcel, Td_parcel)
-    logging.info(f"lcl_p {lcl_pressure:~.1f} lcl_t {lcl_temperature:~.1f}")
+    logging.warning(f"lcl_p {lcl_pressure:~.1f} lcl_t {lcl_temperature:~.2f}")
 
     trans = transforms.blended_transform_factory(skew.ax.transAxes, skew.ax.transData)
-    skew.ax.plot([0.82, 0.85], 2 * [lcl_pressure.m_as("hPa")], transform=trans, color="brown")
+    skew.ax.plot(
+        [0.82, 0.85], 2 * [lcl_pressure.m_as("hPa")], transform=trans, color="brown"
+    )
     skew.ax.text(
         1,
         lcl_pressure,
@@ -231,7 +237,7 @@ def skewt(
         fontsize="x-small",
     )
 
-    # Calculate full parcel profile with LCL.
+    # Calculate full parcel profile with LCL
     p_without_lcl = p  # remember so we can interpolate other variables later
     if min(p) <= lcl_pressure < max(p):
         # Append LCL to pressure array.
@@ -254,13 +260,13 @@ def skewt(
         v,
         height,
     )
-    prof = mpcalc.parcel_profile(p, T_parcel, Td_parcel)
-    prof_mixing_ratio = mpcalc.saturation_mixing_ratio(p, prof)
-    prof_mixing_ratio[
-        p >= lcl_pressure
-    ] = parcel_mixing_ratio.item()  # unsaturated mixing ratio (constant up to LCL)
+    profT = mpcalc.parcel_profile(p, T_parcel, Td_parcel)
+    prof_mixing_ratio = mpcalc.saturation_mixing_ratio(p, profT)
+    prof_mixing_ratio[p >= lcl_pressure] = (
+        parcel_mixing_ratio.item()
+    )  # unsaturated mixing ratio (constant up to LCL)
     # parcel virtual temperature
-    profTv = mpcalc.virtual_temperature(prof, prof_mixing_ratio)
+    profTv = mpcalc.virtual_temperature(profT, prof_mixing_ratio)
 
     # Plot temperature and dewpoint.
     skew.plot(p, T, "r")
@@ -271,14 +277,16 @@ def skewt(
 
     Tv = mpcalc.virtual_temperature(T, mpcalc.saturation_mixing_ratio(p, Td))
 
+    # Environment virtual temperature
     skew.plot(p, Tv, "r", lw=0.5, linestyle="dashed")
+    skew.plot(p, profT, "k", linewidth=1.5, linestyle="dashed")
     # Parcel virtual temperature
-    skew.plot(p, profTv, "k", linewidth=1.5, linestyle="dashed")
+    skew.plot(p, profTv, "k", linewidth=0.5, linestyle="dashed")
 
     # Don't feed cape_cin virtual temperature. It assumes prof
     # is regular temperature, not virtual. It converts to virtual
     # temperature on its own.
-    cape, cin = mpcalc.cape_cin(p, T, Td, prof)
+    cape, cin = mpcalc.cape_cin(p, T, Td, profT)
     # Shade areas of CAPE and CIN
     skew.shade_cin(p, Tv, profTv)
     skew.shade_cape(p, Tv, profTv)
@@ -341,7 +349,10 @@ def skewt(
     for h in agl:
         # Find the appropriate interval
         index = np.searchsorted(label_hgts, h, side="right") - 1
-        if index < len(agl_colors):
+        if index == -1:
+            # AGL below zero
+            barbcolor.append("#00000050")
+        elif index < len(agl_colors):
             barbcolor.append(agl_colors[index])
         else:
             barbcolor.append("none")
