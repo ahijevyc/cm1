@@ -5,8 +5,11 @@ Load ERA5 model dataset for a user-specified time and location.
 Otherwise use the s3fs Amazon Web Service bucket or a local cached file.
 """
 
+import argparse
 import logging
 import os
+import typing
+from pathlib import Path
 
 import metpy.calc as mcalc
 import metpy.constants
@@ -44,7 +47,7 @@ def era5_aws(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwargs):
         longitude=lon,
         latitude=lat,
         method="nearest",
-        tolerance=5*units.deg,
+        tolerance=5 * units.deg,
     )
 
     return ds
@@ -70,8 +73,8 @@ def era5_model_level(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwargs)
         longitude=lon,
         latitude=lat,
         method="nearest",
-        tolerance=5*units.deg,
-)
+        tolerance=5 * units.deg,
+    )
 
     return ds
 
@@ -96,13 +99,13 @@ def era5_pressure_level(time: pd.Timestamp, lat: Quantity, lon: Quantity, **kwar
         longitude=lon,
         latitude=lat,
         method="nearest",
-        tolerance=5*units.deg,
+        tolerance=5 * units.deg,
     )
 
     return ds
 
 
-def get_ofile(args):
+def get_ofile(args: argparse.Namespace) -> Path:
     """
     Generate a temporary file path for caching the dataset.
 
@@ -119,7 +122,7 @@ def get_ofile(args):
     return ofile
 
 
-def get_case(case):
+def get_case(case: str) -> xarray.Dataset:
     """
     Retrieve a predefined sounding case dataset.
 
@@ -164,7 +167,7 @@ def seabreeze_test():
     return get_case("seabreeze_test")
 
 
-def read_from_txt(file_path):
+def read_from_txt(file_path: typing.Union[str, Path]) -> xarray.Dataset:
     """
     Read a CM1 sounding file format and convert it into an xarray Dataset.
 
@@ -303,7 +306,7 @@ def to_txt(ds: xarray.Dataset) -> str:
             (which is nz * dz when stretch_z=0, or ztop when stretch_z=1,  etc)
     """
     # Find the level label with the maximum pressure.
-    # I used to use the level with the highest numeric value. This worked for ERA5 but not CM1 input soundings.
+    # Don't assign level with highest numeric value. This worked for ERA5 but not CM1 input soundings.
     sfc = ds.level.sel(level=ds.P.compute().idxmax())
     # ds.SP (surface pressure) is half-level below ds.level.max()
     sfc_pres = ds.SP if "SP" in ds else ds.P.sel(level=sfc)
@@ -313,7 +316,14 @@ def to_txt(ds: xarray.Dataset) -> str:
         if "surface_potential_temperature" in ds
         else ds["theta"].sel(level=sfc)
     )
-    ds["qv"] = mcalc.mixing_ratio_from_specific_humidity(ds["Q"]).metpy.convert_units("g/kg")
+    # Convert specific humidity Q to mixing ratio qv.
+    if "qv" in ds:
+        logging.warning(
+            "ignoring qv already in Dataset. Recompute from specific humidity Q"
+        )
+    ds["qv"] = mcalc.mixing_ratio_from_specific_humidity(ds["Q"]).metpy.convert_units(
+        "g/kg"
+    )
     sfc_qv_gkg = (
         ds["surface_mixing_ratio"].metpy.convert_units("g/kg")
         if "surface_mixing_ratio" in ds
