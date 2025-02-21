@@ -196,11 +196,13 @@ def read_from_txt(file_path: typing.Union[str, Path]) -> xarray.Dataset:
 
     # Add units and calculate pressure
     ds["qv"] = ds["qv"] * units.g / units.kg  # mixing ratio
+    ds["qv"].attrs["long_name"] = "water vapor mixing ratio"
     ds["Q"] = mcalc.specific_humidity_from_mixing_ratio(ds["qv"])
     ds["SP"] = surface_pressure
     ds["SP"] *= units.hPa
     ds["theta"] = ds["theta"] * units.K
     ds["Z"] = ds["Z"] * units.m
+    ds["Z"].attrs["long_name"] = "geopotential height"
     p_bot = ds.SP.copy()  # copy to avoid modifying the original when adding dp
     z_bot = 0.0 * units.m
     P = []  # pressure array
