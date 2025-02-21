@@ -4,10 +4,14 @@ import os
 from pathlib import Path
 from typing import Optional, Tuple
 
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
 import metpy.calc as mpcalc
 import numpy as np
+import pandas as pd
 import xarray
+from IPython.display import HTML
 from matplotlib.figure import Figure
 from metpy.interpolate import interpolate_1d
 from metpy.plots import Hodograph, SkewT
@@ -45,6 +49,44 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
     logging.info(args)
     return args
+
+
+def animate_cm1out_nc(
+    ds: xarray.Dataset, var_name: str, height: float, dim: str = "zh", interval: int = 200, **kwargs
+):
+    """
+    Create an animation of a user-specified variable at a given vertical level.
+
+    Parameters:
+    - ds: xarray.Dataset
+    - var_name: str, Name of the variable to animate
+    - height: height in km
+    - dim: str, Name of height dimension
+    - interval: int, Interval between frames in milliseconds (default: 200ms)
+    """
+
+    # Extract the variable at the given vertical level
+    data = ds[var_name].sel({dim: height}, method="nearest")
+
+    time = pd.to_timedelta(ds.time)
+
+    img = data.isel(time=0).plot.imshow(origin="lower", **kwargs)
+
+    # Animation function
+    def update(frame):
+        img.set_array(data.isel(time=frame))
+        img.axes.set_title(f"{var_name} at {data[dim].data:.2f} km, Time: {time[frame]}")
+        return [img]
+
+    # Create animation
+    ani = animation.FuncAnimation(
+        img.figure, update, frames=len(time), interval=interval, blit=False
+    )
+
+    # Display in notebook
+    anim_html = HTML(ani.to_jshtml())
+    plt.close(img.figure)  # close figure to prevent static image display
+    return anim_html
 
 
 def mean_lat_lon(lats_deg, lons_deg):
