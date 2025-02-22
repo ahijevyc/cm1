@@ -229,7 +229,7 @@ def skewt(
             ds.SP, ds.surface_potential_temperature
         )
         logging.warning(
-            f"got T_parcel {T_parcel.metpy.convert_units('degC').item():~.2f} from SP {ds.SP.item():~} "
+            f"got T_parcel {T_parcel.metpy.convert_units('degC').item():~.2f} from SP {ds.SP.item():~.1f} "
             f"and surface_potential_temperature {ds.surface_potential_temperature.metpy.convert_units('degC').item():~.2f}"
         )
     else:
@@ -255,7 +255,7 @@ def skewt(
         )
     Td_parcel = mpcalc.dewpoint(mpcalc.vapor_pressure(ds.SP, parcel_mixing_ratio))
     logging.warning(
-        f"p_parcel {ds.SP.item():~} T_parcel {T_parcel.item().to('degC'):~} "
+        f"p_parcel {ds.SP.item():~.1f} T_parcel {T_parcel.item().to('degC'):~.2f} "
         f"Td_parcel {Td_parcel.item():~.2f} "
         f"parcel_mixing_ratio {parcel_mixing_ratio.item().to('g/kg'):~.3f}"
     )
@@ -288,7 +288,7 @@ def skewt(
         # Averaging temperature, pressure, and mixing ratio along levels can
         # make mixing ratio above saturation, making LCL below profile.
         # Don't bother adding lcl_pressure point in that case.
-        logging.warning(f"lcl outside range of p {p.min().item():~} {p.max().item():~}")
+        logging.warning(f"lcl outside range of p {p.min().item():~.1f} {p.max().item():~.1f}")
         p = p.data  # convert to Quantity array (with units) so we can sort it
     # Create reverse sorted array of pressure. mpcalc assumes bottom-up arrays.
     p = np.sort(p)[::-1]
@@ -340,6 +340,8 @@ def skewt(
     title = ""
     if "time" in ds:
         title += f"{ds.time.dt.strftime('%Y-%m-%d %H:%M:%S').item()} "
+    else:
+        logging.warning("no 'time' variable in sounding")
     if "longitude" in ds:
         title += f"{ds.longitude.item():.3f} {ds.latitude.item():.3f}"
     if cape is not None:

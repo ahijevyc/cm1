@@ -93,6 +93,13 @@ class CM1Run:
 #PBS -o {self.pbs.run_dir}
 #PBS -e {self.pbs.run_dir}
 
+# Use ncarenv version before it is loaded by default. Executable must have
+# been compiled with same modules loaded.
+module purge
+module load ncarenv/24.12
+module reset
+module load intel/2025.0.3
+
 export TMPDIR={os.getenv("TMPDIR", Path(os.getenv("SCRATCH")) / "tmp")}
 mkdir -p $TMPDIR
 
@@ -139,7 +146,7 @@ mpiexec --cpu-bind depth {self.pbs.executable_path} >& {self.printout}
         self.namelist.write(namelist_out, force=True)
         logging.info(f"Wrote namelist to {namelist_out}")
 
-        # TODO: function to go from namelist to expected output files
+        # TODO: function to get expected output files from namelist.
         # Check for existing output file(s). Right now assume one netCDF.
         output_file = self.pbs.run_dir / "cm1out.nc"
         if output_file.exists():
